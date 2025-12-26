@@ -1,0 +1,72 @@
+import { Router, Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
+import { authService } from '../services/auth.service.js';
+import { authenticate } from '../middleware/auth.js';
+import type { AuthRequest } from '../types/index.js';
+
+const router = Router();
+
+const signUpSchema = z.object({
+  email: z.string().email('Invalid email'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  fullName: z.string().min(2, 'Name must be at least 2 characters'),
+});
+
+const signInSchema = z.object({
+  email: z.string().email('Invalid email'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+// Sign up
+router.post('/signup', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email, password, fullName } = signUpSchema.parse(req.body);
+    const result = await authService.signUp(email, password, fullName);
+    res.status(201).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Sign in
+router.post('/signin', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email, password } = signInSchema.parse(req.body);
+    const result = await authService.signIn(email, password);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get current user
+router.get('/me', authenticate, async (req: AuthRequest, res: Response) => {
+  res.json({ success: true, data: { user: req.user } });
+});
+
+// Reset password request
+router.post('/reset-password', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email } = z.object({ email: z.string().email() }).parse(req.body);
+    await authService.resetPassword(email);
+    res.json({ success: true, message: 'If the email exists, a reset link has been sent' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Update password
+router.put('/password', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { newPassword } = z.object({
+      newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+    }).parse(req.body);
+
+    await authService.updatePassword(req.user!.id, newPassword);
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+export default router;
