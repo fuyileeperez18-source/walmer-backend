@@ -9,6 +9,9 @@ import { errorHandler, notFound } from './middleware/errorHandler.js';
 
 const app = express();
 
+// Trust proxy for Render/Vercel (required for rate limiting behind reverse proxy)
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 
