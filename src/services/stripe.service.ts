@@ -3,7 +3,7 @@ import { env } from '../config/env.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 const stripe = env.STRIPE_SECRET_KEY
-  ? new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2024-11-20.acacia' })
+  ? new Stripe(env.STRIPE_SECRET_KEY)
   : null;
 
 export const stripeService = {
