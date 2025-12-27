@@ -123,8 +123,8 @@ const productSchema = z.object({
   seo_title: z.string().optional(),
   seo_description: z.string().optional(),
   // Campos adicionales para ropa
-  gender: z.string().optional(),
-  product_type: z.string().optional(),
+  gender: z.enum(['hombre', 'mujer', 'unisex', 'nino', 'nina']).optional(),
+  product_type: z.enum(['camiseta', 'camisa', 'pantalon', 'chaqueta', 'sudadera', 'short', 'accesorio', 'zapato', 'vestido', 'falda', 'otro']).optional(),
   sizes: z.array(z.string()).default([]),
   colors: z.array(z.string()).default([]),
   material: z.string().optional().nullable(),
