@@ -7,6 +7,12 @@ interface ProductFilters {
   search?: string;
   minPrice?: number;
   maxPrice?: number;
+  gender?: string;
+  product_type?: string;
+  sizes?: string[];
+  colors?: string[];
+  brand?: string;
+  sort_by?: 'newest' | 'price_asc' | 'price_desc' | 'popular' | 'name';
   limit?: number;
   offset?: number;
 }
@@ -45,7 +51,7 @@ export const productService = {
     }
 
     if (filters?.search) {
-      sql += ` AND (p.name ILIKE $${paramIndex} OR p.description ILIKE $${paramIndex})`;
+      sql += ` AND (p.name ILIKE $${paramIndex} OR p.description ILIKE $${paramIndex} OR p.brand ILIKE $${paramIndex})`;
       params.push(`%${filters.search}%`);
       paramIndex++;
     }
@@ -62,7 +68,59 @@ export const productService = {
       paramIndex++;
     }
 
-    sql += ' ORDER BY p.created_at DESC';
+    // Filtro por género
+    if (filters?.gender) {
+      sql += ` AND p.gender = $${paramIndex}`;
+      params.push(filters.gender);
+      paramIndex++;
+    }
+
+    // Filtro por tipo de producto
+    if (filters?.product_type) {
+      sql += ` AND p.product_type = $${paramIndex}`;
+      params.push(filters.product_type);
+      paramIndex++;
+    }
+
+    // Filtro por tallas (busca si alguna talla coincide)
+    if (filters?.sizes && filters.sizes.length > 0) {
+      sql += ` AND p.sizes && $${paramIndex}::text[]`;
+      params.push(filters.sizes);
+      paramIndex++;
+    }
+
+    // Filtro por colores (busca si algún color coincide)
+    if (filters?.colors && filters.colors.length > 0) {
+      sql += ` AND p.colors && $${paramIndex}::text[]`;
+      params.push(filters.colors);
+      paramIndex++;
+    }
+
+    // Filtro por marca
+    if (filters?.brand) {
+      sql += ` AND p.brand ILIKE $${paramIndex}`;
+      params.push(`%${filters.brand}%`);
+      paramIndex++;
+    }
+
+    // Ordenamiento
+    switch (filters?.sort_by) {
+      case 'price_asc':
+        sql += ' ORDER BY p.price ASC';
+        break;
+      case 'price_desc':
+        sql += ' ORDER BY p.price DESC';
+        break;
+      case 'name':
+        sql += ' ORDER BY p.name ASC';
+        break;
+      case 'popular':
+        sql += ' ORDER BY p.is_featured DESC, p.created_at DESC';
+        break;
+      case 'newest':
+      default:
+        sql += ' ORDER BY p.created_at DESC';
+    }
 
     if (filters?.limit) {
       sql += ` LIMIT $${paramIndex}`;
@@ -219,8 +277,9 @@ export const productService = {
     const result = await query(
       `INSERT INTO products (name, slug, description, short_description, price, compare_at_price,
         cost_per_item, sku, barcode, quantity, track_quantity, continue_selling_when_out_of_stock,
-        category_id, brand, tags, is_active, is_featured, seo_title, seo_description)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+        category_id, brand, tags, is_active, is_featured, seo_title, seo_description,
+        gender, product_type, sizes, colors, material, weight)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
        RETURNING *`,
       [
         product.name,
@@ -242,6 +301,12 @@ export const productService = {
         product.is_featured ?? false,
         product.seo_title,
         product.seo_description,
+        product.gender,
+        product.product_type,
+        product.sizes || [],
+        product.colors || [],
+        product.material,
+        product.weight,
       ]
     );
 
@@ -257,7 +322,8 @@ export const productService = {
       'name', 'slug', 'description', 'short_description', 'price', 'compare_at_price',
       'cost_per_item', 'sku', 'barcode', 'quantity', 'track_quantity',
       'continue_selling_when_out_of_stock', 'category_id', 'brand', 'tags',
-      'is_active', 'is_featured', 'seo_title', 'seo_description'
+      'is_active', 'is_featured', 'seo_title', 'seo_description',
+      'gender', 'product_type', 'sizes', 'colors', 'material', 'weight'
     ];
 
     for (const [key, value] of Object.entries(updates)) {

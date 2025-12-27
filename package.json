@@ -7,19 +7,28 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed:admins": "tsx src/scripts/seed-admins.ts"
   },
-  "keywords": ["ecommerce", "api", "nodejs", "express"],
+  "keywords": [
+    "ecommerce",
+    "api",
+    "nodejs",
+    "express"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/multer": "^2.0.0",
     "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "express-rate-limit": "^7.4.0",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
     "pg": "^8.13.0",
     "stripe": "^17.3.1",
     "uuid": "^10.0.0",

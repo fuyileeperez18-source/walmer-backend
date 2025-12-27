@@ -14,6 +14,10 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().default('http://localhost:5173'),
   RATE_LIMIT_WINDOW_MS: z.string().default('900000'),
   RATE_LIMIT_MAX: z.string().default('100'),
+  // Cloudinary
+  CLOUDINARY_CLOUD_NAME: z.string().default('dpqtlalhr'),
+  CLOUDINARY_API_KEY: z.string().default('349642127979112'),
+  CLOUDINARY_API_SECRET: z.string().default('IlRgm45gSTCRU_kocNVlFG_v_bg'),
 });
 
 const parsed = envSchema.safeParse(process.env);

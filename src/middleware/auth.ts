@@ -101,3 +101,31 @@ export const requireAdmin = (
 
   next();
 };
+
+/**
+ * Middleware para super_admin solamente (Fuyi)
+ * Usado para: ver comisiones, gestionar admins, configuración del sistema
+ */
+export const requireSuperAdmin = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  if (!req.user) {
+    res.status(401).json({
+      success: false,
+      error: 'Authentication required',
+    });
+    return;
+  }
+
+  if (req.user.role !== 'super_admin') {
+    res.status(403).json({
+      success: false,
+      error: 'Super admin access required',
+    });
+    return;
+  }
+
+  next();
+};

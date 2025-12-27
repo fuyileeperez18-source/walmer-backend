@@ -25,6 +25,9 @@ export interface Address {
 }
 
 // Product Types
+export type ProductGender = 'hombre' | 'mujer' | 'unisex' | 'nino' | 'nina';
+export type ProductType = 'camiseta' | 'camisa' | 'pantalon' | 'chaqueta' | 'sudadera' | 'short' | 'accesorio' | 'zapato' | 'vestido' | 'falda' | 'otro';
+
 export interface Product {
   id: string;
   name: string;
@@ -49,6 +52,13 @@ export interface Product {
   is_featured: boolean;
   seo_title?: string;
   seo_description?: string;
+  // Nuevos campos para filtrado
+  gender?: ProductGender;
+  product_type?: ProductType;
+  sizes?: string[];  // ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+  colors?: string[]; // ['Negro', 'Blanco', 'Azul']
+  material?: string; // 'Algodón', 'Poliéster', etc.
+  weight?: number;   // Peso en gramos
   created_at: string;
   updated_at: string;
 }
