@@ -47,15 +47,23 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const response = await authService.signIn(email, password);
-          console.log('🔐 [authStore.signIn] Response completa:', response);
-          console.log('🔐 [authStore.signIn] User received:', response.user);
-          console.log('🔐 [authStore.signIn] User role:', response.user?.role);
-          console.log('🔐 [authStore.signIn] Token:', response.token ? 'Present' : 'Missing');
+          console.log('🔐 [authStore.signIn] Response COMPLETA from authService:', JSON.stringify(response, null, 2));
+          console.log('🔐 [authStore.signIn] typeof response:', typeof response);
+          console.log('🔐 [authStore.signIn] response.user:', response.user);
+          console.log('🔐 [authStore.signIn] response.user?.role:', response.user?.role);
+          console.log('🔐 [authStore.signIn] Token presente?', !!response.token);
 
-          if (!response.user || !response.user.role) {
-            console.error('❌ [authStore.signIn] PROBLEMA: Usuario sin role!', response);
+          if (!response || !response.user) {
+            console.error('❌ [authStore.signIn] PROBLEMA: Response sin user!', response);
+            throw new Error('Respuesta inválida del servidor');
+          }
+
+          if (!response.user.role) {
+            console.error('❌ [authStore.signIn] PROBLEMA: Usuario sin role!', response.user);
             throw new Error('Usuario sin role en la respuesta');
           }
+
+          console.log('✅ [authStore.signIn] Datos válidos, guardando en estado...');
 
           // IMPORTANTE: Guardar user Y profile con el role
           set({
@@ -70,10 +78,11 @@ export const useAuthStore = create<AuthState>()(
           console.log('   - Profile:', get().profile);
           console.log('   - Role:', get().profile?.role);
           console.log('   - isAuthenticated:', get().isAuthenticated);
+          console.log('✅ [authStore.signIn] Devolviendo user con role:', response.user.role);
 
           return response.user; // Devolver el user para que LoginPage lo use
         } catch (error) {
-          console.error('❌ [authStore.signIn] Error:', error);
+          console.error('❌ [authStore.signIn] Error capturado:', error);
           set({ isLoading: false });
           throw error;
         }
