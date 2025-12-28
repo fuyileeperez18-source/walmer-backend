@@ -1,5 +1,5 @@
 import { query } from '../config/database.js';
-import type { Commission, TeamMember, CommissionSummary, CommissionPayment } from '../types/index.js';
+import type { Commission, TeamMember, CommissionSummary, CommissionPayment, User } from '../types/index.js';
 
 /**
  * Servicio de comisiones actualizado para trabajar con las tablas team_members y commissions
@@ -16,7 +16,11 @@ export const commissionService = {
         tm.*,
         u.email,
         u.full_name,
-        u.avatar_url
+        u.avatar_url,
+        u.role,
+        u.is_active,
+        u.created_at as user_created_at,
+        u.updated_at as user_updated_at
       FROM team_members tm
       JOIN users u ON tm.user_id = u.id
       ORDER BY tm.joined_at DESC
@@ -30,7 +34,11 @@ export const commissionService = {
         email: row.email,
         full_name: row.full_name,
         avatar_url: row.avatar_url,
-      },
+        role: row.role,
+        is_active: row.is_active,
+        created_at: row.user_created_at,
+        updated_at: row.user_updated_at,
+      } as User,
       position: row.position,
       commission_percentage: parseFloat(row.commission_percentage),
       can_manage_products: row.can_manage_products,
@@ -55,7 +63,11 @@ export const commissionService = {
         tm.*,
         u.email,
         u.full_name,
-        u.avatar_url
+        u.avatar_url,
+        u.role,
+        u.is_active,
+        u.created_at as user_created_at,
+        u.updated_at as user_updated_at
       FROM team_members tm
       JOIN users u ON tm.user_id = u.id
       WHERE tm.id = $1
@@ -72,7 +84,11 @@ export const commissionService = {
         email: row.email,
         full_name: row.full_name,
         avatar_url: row.avatar_url,
-      },
+        role: row.role,
+        is_active: row.is_active,
+        created_at: row.user_created_at,
+        updated_at: row.user_updated_at,
+      } as User,
       position: row.position,
       commission_percentage: parseFloat(row.commission_percentage),
       can_manage_products: row.can_manage_products,
@@ -120,8 +136,8 @@ export const commissionService = {
    * Actualiza un miembro del equipo
    */
   async updateTeamMember(id: string, data: Partial<Omit<TeamMember, 'id' | 'user' | 'joined_at' | 'created_at' | 'updated_at'>>): Promise<TeamMember | null> {
-    const fields = [];
-    const values = [];
+    const fields: string[] = [];
+    const values: unknown[] = [];
     let paramIndex = 1;
 
     Object.entries(data).forEach(([key, value]) => {
@@ -208,10 +224,24 @@ export const commissionService = {
           id: row.user_id,
           email: row.team_member_email,
           full_name: row.team_member_name,
-        },
+          role: 'admin', // Default role for team members
+          is_active: true,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+        } as User,
         position: row.position,
         commission_percentage: parseFloat(row.team_commission_percentage),
-      },
+        can_manage_products: row.can_manage_products,
+        can_manage_orders: row.can_manage_orders,
+        can_view_analytics: row.can_view_analytics,
+        can_manage_customers: row.can_manage_customers,
+        can_manage_settings: row.can_manage_settings,
+        can_manage_team: row.can_manage_team,
+        notes: row.notes,
+        joined_at: row.joined_at,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+      } as TeamMember,
       order_id: row.order_id,
       order: row.order_id ? {
         id: row.order_id,
