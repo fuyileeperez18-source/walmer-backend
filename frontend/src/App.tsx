@@ -65,11 +65,16 @@ function ProtectedRoute({
   ownerOnly?: boolean;
   teamOnly?: boolean;
 }) {
-  const { isAuthenticated, profile, isLoading } = useAuthStore();
+  const { isAuthenticated, user, profile, isLoading } = useAuthStore();
+
+  // Usar user o profile, lo que esté disponible
+  const currentUser = user || profile;
 
   console.log('🔐 [ProtectedRoute] Check - isAuthenticated:', isAuthenticated);
+  console.log('🔐 [ProtectedRoute] isLoading:', isLoading);
+  console.log('🔐 [ProtectedRoute] User:', user);
   console.log('🔐 [ProtectedRoute] Profile:', profile);
-  console.log('🔐 [ProtectedRoute] Profile role:', profile?.role);
+  console.log('🔐 [ProtectedRoute] Current user role:', currentUser?.role);
   console.log('🔐 [ProtectedRoute] Flags - adminOnly:', adminOnly, 'ownerOnly:', ownerOnly, 'teamOnly:', teamOnly);
 
   if (isLoading) {
@@ -81,30 +86,30 @@ function ProtectedRoute({
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !currentUser) {
     console.log('❌ [ProtectedRoute] Not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
   // Solo propietario (super_admin)
-  if (ownerOnly && profile?.role !== 'super_admin') {
+  if (ownerOnly && currentUser?.role !== 'super_admin') {
     console.log('❌ [ProtectedRoute] Owner only - redirecting to account');
     return <Navigate to="/account" replace />;
   }
 
   // Admin o superior
-  if (adminOnly && profile?.role !== 'admin' && profile?.role !== 'super_admin') {
-    console.log('❌ [ProtectedRoute] Admin only - Role is:', profile?.role, '- redirecting to home');
+  if (adminOnly && currentUser?.role !== 'admin' && currentUser?.role !== 'super_admin') {
+    console.log('❌ [ProtectedRoute] Admin only - Role is:', currentUser?.role, '- redirecting to home');
     return <Navigate to="/" replace />;
   }
 
   // Miembro del equipo (developer, admin, super_admin)
-  if (teamOnly && profile?.role === 'customer') {
+  if (teamOnly && currentUser?.role === 'customer') {
     console.log('❌ [ProtectedRoute] Team only - redirecting to account');
     return <Navigate to="/account" replace />;
   }
 
-  console.log('✅ [ProtectedRoute] Access granted');
+  console.log('✅ [ProtectedRoute] Access granted for role:', currentUser?.role);
   return <>{children}</>;
 }
 

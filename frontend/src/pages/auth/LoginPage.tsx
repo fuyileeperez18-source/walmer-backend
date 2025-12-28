@@ -37,24 +37,42 @@ export function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
+      console.log('🔐 [LoginPage] Iniciando login para:', data.email);
+
       // signIn ahora devuelve el usuario directamente
       const user = await signIn(data.email, data.password);
 
-      console.log('🔐 Login exitoso - Usuario devuelto:', user);
-      console.log('🔐 Login exitoso - Role del usuario:', user?.role);
+      console.log('🔐 [LoginPage] Login exitoso - Usuario devuelto:', user);
+      console.log('🔐 [LoginPage] Role del usuario:', user?.role);
+
+      // IMPORTANTE: Esperar a que el estado se actualice completamente
+      // Dar un pequeño delay para asegurar que zustand persiste el estado
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Verificar que el estado se actualizó correctamente
+      const currentUser = useAuthStore.getState().user;
+      console.log('🔐 [LoginPage] Estado actual después de login:', currentUser);
+      console.log('🔐 [LoginPage] isAuthenticated:', useAuthStore.getState().isAuthenticated);
 
       // Si es admin o super_admin, redirigir al panel de admin
       if (user?.role === 'admin' || user?.role === 'super_admin') {
-        console.log('🚀 Redirigiendo a /admin porque el usuario es:', user.role);
-        toast.success('¡Bienvenido al Panel de Administración!');
-        navigate('/admin', { replace: true });
+        console.log('🚀 [LoginPage] Usuario es admin, redirigiendo a /admin');
+        toast.success(`¡Bienvenido al Panel de Administración, ${user.full_name || user.email}!`);
+
+        // Usar setTimeout para asegurar que la navegación ocurre después del toast
+        setTimeout(() => {
+          navigate('/admin', { replace: true });
+        }, 200);
       } else {
-        console.log('👤 Redirigiendo a', from, 'porque el usuario es:', user?.role);
+        console.log('👤 [LoginPage] Usuario regular, redirigiendo a:', from);
         toast.success('¡Bienvenido de nuevo!');
-        navigate(from, { replace: true });
+
+        setTimeout(() => {
+          navigate(from, { replace: true });
+        }, 200);
       }
     } catch (error) {
-      console.error('❌ Error en login:', error);
+      console.error('❌ [LoginPage] Error en login:', error);
       toast.error('Correo o contraseña inválidos');
     }
   };
