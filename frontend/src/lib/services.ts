@@ -33,13 +33,23 @@ export const authService = {
   },
 
   async signIn(email: string, password: string) {
+    console.log('🔐 [authService.signIn] Llamando a /auth/signin con:', { email });
     const response = await api.post<{ user: User; token: string }>('/auth/signin', {
       email,
       password,
     });
+    console.log('🔐 [authService.signIn] Respuesta del backend:', response);
+    console.log('🔐 [authService.signIn] response.data:', response.data);
+
+    // La respuesta viene en response.data porque el backend devuelve { success: true, data: { user, token } }
     if (response.data?.token) {
+      console.log('🔐 [authService.signIn] Guardando token en localStorage');
       api.setToken(response.data.token);
+    } else {
+      console.error('❌ [authService.signIn] Token no encontrado en response.data');
     }
+
+    console.log('🔐 [authService.signIn] Devolviendo:', response.data);
     return response.data!;
   },
 
