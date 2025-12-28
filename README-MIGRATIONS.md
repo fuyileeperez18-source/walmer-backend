@@ -43,32 +43,43 @@ npm run seed:admins
 
 ## 🔄 Migraciones Automáticas
 
-### Opción 1: Postinstall (Recomendado para Producción)
+### ✅ **Opción Recomendada: Auto-ejecución al Iniciar Servidor**
 
-El script `postinstall` ejecuta automáticamente las migraciones al hacer `npm install`:
+Las migraciones ahora se ejecutan **automáticamente** cada vez que inicias el servidor:
 
-```json
-{
-  "scripts": {
-    "postinstall": "npm run db:setup"
-  }
-}
+```bash
+# Simplemente inicia tu servidor normalmente
+npm run dev
+# o
+npm run start
 ```
+
+**Qué sucede automáticamente:**
+1. ✅ Se verifican migraciones pendientes
+2. ✅ Se ejecutan todas las migraciones nuevas
+3. ✅ Se crean usuarios admin si no existen
+4. ✅ El servidor inicia normalmente
+
+**Ventajas:**
+- 🚀 **Cero intervención manual**
+- 🔄 **Siempre actualizado** en desarrollo
+- 📦 **Funciona en producción** (Railway, Render, etc.)
+- 🛡️ **A prueba de errores** (continúa si ya están aplicadas)
 
 ### Opción 2: Deploy Hooks (Railway/Render)
 
-En plataformas como Railway o Render, configura el build command:
+Si usas plataformas que requieren configuración específica:
 
 ```bash
-npm run db:setup && npm run build
+# Railway/Render build command
+npm run build
+# (Las migraciones se ejecutan automáticamente al iniciar)
 ```
 
-### Opción 3: Script Manual
-
-Para desarrollo local, ejecuta manualmente:
+### Opción 3: Manual (Solo si necesitas control total)
 
 ```bash
-# Después de cada cambio en el schema
+# Ejecutar migraciones manualmente
 npm run migrate:all
 npm run seed:admins
 ```

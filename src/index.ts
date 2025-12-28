@@ -2,8 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import { readFileSync, readdirSync } from 'fs';
+import { join } from 'path';
 import { env } from './config/env.js';
-import { pool } from './config/database.js';
+import { pool, query } from './config/database.js';
 import routes from './routes/index.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 
@@ -66,14 +68,126 @@ app.use('/api', routes);
 app.use(notFound);
 app.use(errorHandler);
 
+// Función para ejecutar migraciones automáticamente
+async function runAutoMigrations() {
+  console.log('🔄 Verificando migraciones pendientes...');
+
+  try {
+    // Leer todas las migraciones disponibles
+    const migrationsDir = join(process.cwd(), 'migrations');
+    const migrationFiles = readdirSync(migrationsDir)
+      .filter(file => file.endsWith('.sql'))
+      .sort(); // Ordenar alfabéticamente
+
+    console.log(`📁 Encontradas ${migrationFiles.length} migraciones`);
+
+    let executedCount = 0;
+
+    // Ejecutar cada migración
+    for (const file of migrationFiles) {
+      const migrationName = file.replace('.sql', '');
+      const migrationPath = join(migrationsDir, file);
+
+      try {
+        // Verificar si la migración ya se ejecutó (buscando una tabla específica de esa migración)
+        let checkTable = '';
+        if (migrationName === '000_initial_schema') checkTable = 'users';
+        else if (migrationName === '004_add_commission_system') checkTable = 'team_members';
+
+        if (checkTable) {
+          const checkResult = await query(`
+            SELECT EXISTS (
+              SELECT 1
+              FROM information_schema.tables
+              WHERE table_schema = 'public'
+              AND table_name = $1
+            )
+          `, [checkTable]);
+
+          if (checkResult.rows[0].exists) {
+            console.log(`⏭️  ${migrationName} ya aplicada`);
+            continue;
+          }
+        }
+
+        // Ejecutar la migración
+        console.log(`📄 Ejecutando: ${migrationName}`);
+        const sql = readFileSync(migrationPath, 'utf8');
+        await query(sql);
+        console.log(`✅ ${migrationName} completada`);
+        executedCount++;
+
+      } catch (error: any) {
+        // Si es error de tabla ya existe, continuar
+        if (error.message.includes('already exists') ||
+            error.message.includes('ya existe') ||
+            error.message.includes('duplicate key')) {
+          console.log(`⚠️  ${migrationName} ya aplicada (error ignorado)`);
+        } else {
+          console.error(`❌ Error en ${migrationName}:`, error.message);
+          // No fallar completamente, continuar con otras migraciones
+        }
+      }
+    }
+
+    if (executedCount > 0) {
+      console.log(`🎉 Ejecutadas ${executedCount} migraciones nuevas`);
+    } else {
+      console.log('✅ Todas las migraciones ya están aplicadas');
+    }
+
+  } catch (error: any) {
+    console.error('❌ Error ejecutando migraciones automáticas:', error.message);
+    console.log('⚠️  Continuando con el inicio del servidor...');
+  }
+}
+
+// Función para ejecutar seed automático
+async function runAutoSeed() {
+  console.log('🌱 Verificando usuarios administradores...');
+
+  try {
+    // Verificar si ya existen admins
+    const adminCheck = await query(`
+      SELECT COUNT(*) as admin_count
+      FROM users
+      WHERE role IN ('admin', 'super_admin')
+    `);
+
+    if (parseInt(adminCheck.rows[0].admin_count) === 0) {
+      console.log('👤 Creando usuarios administradores...');
+
+      // Ejecutar seed de admins
+      const { execSync } = await import('child_process');
+      execSync('npm run seed:admins', { stdio: 'inherit' });
+
+      console.log('✅ Usuarios administradores creados');
+    } else {
+      console.log('✅ Usuarios administradores ya existen');
+    }
+
+  } catch (error: any) {
+    console.error('❌ Error ejecutando seed automático:', error.message);
+    console.log('⚠️  Continuando con el inicio del servidor...');
+  }
+}
+
 // Start server
 const PORT = parseInt(env.PORT);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Environment: ${env.NODE_ENV}`);
-  console.log(`Frontend URL: ${env.FRONTEND_URL}`);
-});
+// Ejecutar migraciones y seed automáticamente al iniciar
+(async () => {
+  await runAutoMigrations();
+  await runAutoSeed();
+
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`🌍 Environment: ${env.NODE_ENV}`);
+    console.log(`🔗 Frontend URL: ${env.FRONTEND_URL}`);
+    console.log(`📊 Database: Connected`);
+    console.log(`🔄 Auto-migrations: Enabled`);
+  });
+})();
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {

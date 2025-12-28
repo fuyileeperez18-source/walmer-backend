@@ -12,8 +12,7 @@
     "migrate": "tsx src/scripts/run-migration.ts",
     "migrate:all": "tsx src/scripts/run-migration.ts",
     "setup:team": "tsx src/scripts/setup-team.ts",
-    "db:setup": "npm run migrate:all && npm run seed:admins",
-    "postinstall": "npm run db:setup"
+    "db:setup": "npm run migrate:all && npm run seed:admins"
   },
   "keywords": [
     "ecommerce",
