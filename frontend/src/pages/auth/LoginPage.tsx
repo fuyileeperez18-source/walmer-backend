@@ -37,25 +37,19 @@ export function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      await signIn(data.email, data.password);
+      // signIn ahora devuelve el usuario directamente
+      const user = await signIn(data.email, data.password);
 
-      // Esperar un frame para que el estado se actualice completamente
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Obtener el usuario actualizado del store
-      const state = useAuthStore.getState();
-      const userRole = state.profile?.role || state.user?.role;
-
-      console.log('🔐 Login exitoso - Role:', userRole);
-      console.log('🔐 Login exitoso - Profile:', state.profile);
-      console.log('🔐 Login exitoso - User:', state.user);
+      console.log('🔐 Login exitoso - Usuario devuelto:', user);
+      console.log('🔐 Login exitoso - Role del usuario:', user?.role);
 
       // Si es admin o super_admin, redirigir al panel de admin
-      if (userRole === 'admin' || userRole === 'super_admin') {
-        console.log('🚀 Redirigiendo a /admin porque el usuario es:', userRole);
+      if (user?.role === 'admin' || user?.role === 'super_admin') {
+        console.log('🚀 Redirigiendo a /admin porque el usuario es:', user.role);
         toast.success('¡Bienvenido al Panel de Administración!');
         navigate('/admin', { replace: true });
       } else {
+        console.log('👤 Redirigiendo a', from, 'porque el usuario es:', user?.role);
         toast.success('¡Bienvenido de nuevo!');
         navigate(from, { replace: true });
       }
