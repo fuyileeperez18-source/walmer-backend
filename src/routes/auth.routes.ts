@@ -31,10 +31,19 @@ router.post('/signup', async (req: Request, res: Response, next: NextFunction) =
 // Sign in
 router.post('/signin', async (req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log('📝 [POST /api/auth/signin] Request received');
+    console.log('📝 Body:', { email: req.body?.email, hasPassword: !!req.body?.password });
+
     const { email, password } = signInSchema.parse(req.body);
+    console.log('✅ [POST /api/auth/signin] Schema validation passed');
+
     const result = await authService.signIn(email, password);
+    console.log('✅ [POST /api/auth/signin] SignIn successful for:', email);
+    console.log('✅ User role:', result.user.role);
+
     res.json({ success: true, data: result });
   } catch (error) {
+    console.error('❌ [POST /api/auth/signin] Error:', error);
     next(error);
   }
 });

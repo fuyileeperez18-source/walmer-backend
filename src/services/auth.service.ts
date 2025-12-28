@@ -33,6 +33,8 @@ export const authService = {
   },
 
   async signIn(email: string, password: string): Promise<{ user: User; token: string }> {
+    console.log('🔐 [authService.signIn] Attempting login for:', email);
+
     // Get user with password
     const result = await query(
       'SELECT id, email, full_name, phone, avatar_url, role, password_hash, created_at, updated_at FROM users WHERE email = $1',
@@ -40,20 +42,27 @@ export const authService = {
     );
 
     if (result.rows.length === 0) {
+      console.log('❌ [authService.signIn] User not found:', email);
       throw new AppError('Invalid email or password', 401);
     }
 
     const userRow = result.rows[0];
+    console.log('✅ [authService.signIn] User found:', { email, role: userRow.role });
 
     // Verify password
     const isValidPassword = await bcrypt.compare(password, userRow.password_hash);
     if (!isValidPassword) {
+      console.log('❌ [authService.signIn] Invalid password for:', email);
       throw new AppError('Invalid email or password', 401);
     }
+
+    console.log('✅ [authService.signIn] Password verified for:', email);
 
     // Remove password hash from user object
     const { password_hash: _, ...user } = userRow;
     const token = this.generateToken(user as User);
+
+    console.log('✅ [authService.signIn] Token generated for:', email);
 
     return { user: user as User, token };
   },
