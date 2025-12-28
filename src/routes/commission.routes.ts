@@ -1,25 +1,56 @@
 import { Router, Response } from 'express';
 import { commissionService } from '../services/commission.service.js';
-import { authenticate, requireSuperAdmin } from '../middleware/auth.js';
+import { authenticate, requireAdmin, requireSuperAdmin } from '../middleware/auth.js';
 import type { AuthRequest } from '../types/index.js';
 
 const router = Router();
 
 /**
+ * GET /api/commissions
+ * Obtiene todas las comisiones con filtros (solo admin+)
+ */
+router.get(
+  '/',
+  authenticate,
+  requireAdmin,
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { team_member_id, status, limit, offset } = req.query;
+      const filters = {
+        team_member_id: team_member_id as string,
+        status: status as string,
+        limit: limit ? parseInt(limit as string) : undefined,
+        offset: offset ? parseInt(offset as string) : undefined,
+      };
+
+      const commissions = await commissionService.getAllCommissions(filters);
+
+      res.json({
+        success: true,
+        data: commissions,
+      });
+    } catch (error) {
+      console.error('Error getting commissions:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Error al obtener comisiones',
+      });
+    }
+  }
+);
+
+/**
  * GET /api/commissions/summary
- * Obtiene el resumen de comisiones (solo super_admin)
+ * Obtiene el resumen de comisiones (solo admin+)
  */
 router.get(
   '/summary',
   authenticate,
-  requireSuperAdmin,
+  requireAdmin,
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const { start_date, end_date } = req.query;
-      const summary = await commissionService.getSummary(
-        start_date as string,
-        end_date as string
-      );
+      const { team_member_id } = req.query;
+      const summary = await commissionService.getCommissionSummary(team_member_id as string);
 
       res.json({
         success: true,
@@ -36,108 +67,171 @@ router.get(
 );
 
 /**
- * GET /api/commissions/daily
- * Obtiene comisiones diarias (solo super_admin)
+ * PUT /api/commissions/:id/status
+ * Actualiza el estado de una comisión (solo admin+)
  */
-router.get(
-  '/daily',
+router.put(
+  '/:id/status',
   authenticate,
-  requireSuperAdmin,
+  requireAdmin,
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const days = parseInt(req.query.days as string) || 30;
-      const dailyCommissions = await commissionService.getDailyCommissions(days);
+      const { id } = req.params;
+      const { status } = req.body;
+
+      if (!status || !['pending', 'approved', 'paid', 'cancelled'].includes(status)) {
+        res.status(400).json({
+          success: false,
+          error: 'Estado inválido',
+        });
+        return;
+      }
+
+      await commissionService.updateCommissionStatus(id, status, req.user?.id);
 
       res.json({
         success: true,
-        data: dailyCommissions,
+        message: 'Estado de comisión actualizado',
       });
     } catch (error) {
-      console.error('Error getting daily commissions:', error);
+      console.error('Error updating commission status:', error);
       res.status(500).json({
         success: false,
-        error: 'Error al obtener comisiones diarias',
+        error: 'Error al actualizar estado de comisión',
       });
     }
   }
 );
 
 /**
- * GET /api/commissions/monthly
- * Obtiene comisiones mensuales (solo super_admin)
+ * GET /api/commissions/team-members
+ * Obtiene todos los miembros del equipo (solo admin+)
  */
 router.get(
-  '/monthly',
+  '/team-members',
   authenticate,
-  requireSuperAdmin,
+  requireAdmin,
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const months = parseInt(req.query.months as string) || 12;
-      const monthlyCommissions = await commissionService.getMonthlyCommissions(months);
+      const teamMembers = await commissionService.getAllTeamMembers();
 
       res.json({
         success: true,
-        data: monthlyCommissions,
+        data: teamMembers,
       });
     } catch (error) {
-      console.error('Error getting monthly commissions:', error);
+      console.error('Error getting team members:', error);
       res.status(500).json({
         success: false,
-        error: 'Error al obtener comisiones mensuales',
+        error: 'Error al obtener miembros del equipo',
       });
     }
   }
 );
 
 /**
- * GET /api/commissions/orders
- * Obtiene detalle de comisiones por orden (solo super_admin)
+ * POST /api/commissions/team-members
+ * Crea un nuevo miembro del equipo (solo super_admin)
  */
-router.get(
-  '/orders',
+router.post(
+  '/team-members',
   authenticate,
   requireSuperAdmin,
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const limit = parseInt(req.query.limit as string) || 50;
-      const offset = parseInt(req.query.offset as string) || 0;
-      const orderCommissions = await commissionService.getOrderCommissions(limit, offset);
+      const teamMember = await commissionService.createTeamMember(req.body);
 
-      res.json({
+      res.status(201).json({
         success: true,
-        data: orderCommissions,
+        data: teamMember,
       });
     } catch (error) {
-      console.error('Error getting order commissions:', error);
+      console.error('Error creating team member:', error);
       res.status(500).json({
         success: false,
-        error: 'Error al obtener comisiones por orden',
+        error: 'Error al crear miembro del equipo',
       });
     }
   }
 );
 
 /**
- * GET /api/commissions/pending
- * Obtiene comisiones pendientes (solo super_admin)
+ * PUT /api/commissions/team-members/:id
+ * Actualiza un miembro del equipo (solo super_admin)
  */
-router.get(
-  '/pending',
+router.put(
+  '/team-members/:id',
   authenticate,
   requireSuperAdmin,
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const pending = await commissionService.getPendingCommissions();
+      const { id } = req.params;
+      const teamMember = await commissionService.updateTeamMember(id, req.body);
 
       res.json({
         success: true,
-        data: pending,
+        data: teamMember,
       });
     } catch (error) {
-      console.error('Error getting pending commissions:', error);
+      console.error('Error updating team member:', error);
       res.status(500).json({
         success: false,
-        error: 'Error al obtener comisiones pendientes',
+        error: 'Error al actualizar miembro del equipo',
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/commissions/payments
+ * Registra un pago de comisión (solo admin+)
+ */
+router.post(
+  '/payments',
+  authenticate,
+  requireAdmin,
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const payment = await commissionService.recordCommissionPayment({
+        ...req.body,
+        paid_by: req.user?.id,
+      });
+
+      res.status(201).json({
+        success: true,
+        data: payment,
+      });
+    } catch (error) {
+      console.error('Error recording commission payment:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Error al registrar pago de comisión',
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/commissions/dashboard-stats
+ * Obtiene estadísticas para el dashboard del propietario (solo admin+)
+ */
+router.get(
+  '/dashboard-stats',
+  authenticate,
+  requireAdmin,
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const stats = await commissionService.getOwnerDashboardStats();
+
+      res.json({
+        success: true,
+        data: stats,
+      });
+    } catch (error) {
+      console.error('Error getting dashboard stats:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Error al obtener estadísticas del dashboard',
       });
     }
   }

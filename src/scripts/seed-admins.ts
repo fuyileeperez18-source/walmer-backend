@@ -64,6 +64,117 @@ async function seedAdmins() {
     }
   }
 
+  // Configurar miembros del equipo para comisiones
+  console.log('💼 Configurando miembros del equipo para comisiones...\n');
+
+  const teamMembers = [
+    {
+      email: 'fuyi@melosportt.com',
+      position: 'developer',
+      commission_percentage: 12.00, // 12% commission
+      permissions: {
+        can_manage_products: true,
+        can_manage_orders: true,
+        can_view_analytics: true,
+        can_manage_customers: true,
+        can_manage_settings: true,
+        can_manage_team: true,
+      }
+    },
+    {
+      email: 'walmer@melosportt.com',
+      position: 'owner',
+      commission_percentage: 0.00, // Walmer doesn't get commission, he owns the store
+      permissions: {
+        can_manage_products: true,
+        can_manage_orders: true,
+        can_view_analytics: true,
+        can_manage_customers: true,
+        can_manage_settings: false,
+        can_manage_team: false,
+      }
+    }
+  ];
+
+  for (const member of teamMembers) {
+    try {
+      // Obtener el user_id
+      const userResult = await query('SELECT id FROM users WHERE email = $1', [member.email]);
+
+      if (userResult.rows.length === 0) {
+        console.log(`⚠️  Usuario ${member.email} no encontrado, saltando configuración de equipo...`);
+        continue;
+      }
+
+      const userId = userResult.rows[0].id;
+
+      // Verificar si ya existe como miembro del equipo
+      const existingTeamMember = await query('SELECT id FROM team_members WHERE user_id = $1', [userId]);
+
+      if (existingTeamMember.rows.length > 0) {
+        // Actualizar
+        await query(`
+          UPDATE team_members SET
+            position = $1,
+            commission_percentage = $2,
+            can_manage_products = $3,
+            can_manage_orders = $4,
+            can_view_analytics = $5,
+            can_manage_customers = $6,
+            can_manage_settings = $7,
+            can_manage_team = $8,
+            updated_at = NOW()
+          WHERE user_id = $9
+        `, [
+          member.position,
+          member.commission_percentage,
+          member.permissions.can_manage_products,
+          member.permissions.can_manage_orders,
+          member.permissions.can_view_analytics,
+          member.permissions.can_manage_customers,
+          member.permissions.can_manage_settings,
+          member.permissions.can_manage_team,
+          userId
+        ]);
+
+        console.log(`✅ Miembro del equipo actualizado: ${member.email}`);
+        console.log(`   Posición: ${member.position}`);
+        console.log(`   Comisión: ${member.commission_percentage}%`);
+      } else {
+        // Crear nuevo miembro del equipo
+        const teamMemberId = uuidv4();
+
+        await query(`
+          INSERT INTO team_members (
+            id, user_id, position, commission_percentage,
+            can_manage_products, can_manage_orders, can_view_analytics,
+            can_manage_customers, can_manage_settings, can_manage_team,
+            joined_at, created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW(), NOW())
+        `, [
+          teamMemberId,
+          userId,
+          member.position,
+          member.commission_percentage,
+          member.permissions.can_manage_products,
+          member.permissions.can_manage_orders,
+          member.permissions.can_view_analytics,
+          member.permissions.can_manage_customers,
+          member.permissions.can_manage_settings,
+          member.permissions.can_manage_team
+        ]);
+
+        console.log(`✅ Miembro del equipo creado: ${member.email}`);
+        console.log(`   Posición: ${member.position}`);
+        console.log(`   Comisión: ${member.commission_percentage}%`);
+      }
+
+      console.log('');
+    } catch (error) {
+      console.error(`❌ Error configurando miembro del equipo ${member.email}:`, error);
+    }
+  }
+
   console.log('\n📋 Resumen de roles:');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('SUPER_ADMIN (Fuyi):');
