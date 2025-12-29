@@ -38,18 +38,25 @@ export function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       console.log('🔐 [LoginPage] Iniciando login...');
+
+      // Limpiar estado anterior antes de hacer login
+      localStorage.removeItem('melo-sportt-auth');
+      localStorage.removeItem('melo_sportt_token');
+
       const user = await signIn(data.email, data.password);
 
-      console.log('🔐 [LoginPage] Usuario recibido:', user);
+      console.log('🔐 [LoginPage] Usuario recibido:', JSON.stringify(user, null, 2));
       console.log('🔐 [LoginPage] user?.role:', user?.role);
       console.log('🔐 [LoginPage] typeof user?.role:', typeof user?.role);
-      console.log('🔐 [LoginPage] user?.role === "admin":', user?.role === 'admin');
-      console.log('🔐 [LoginPage] user?.role === "super_admin":', user?.role === 'super_admin');
+
+      // Verificar explícitamente el role
+      const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+      console.log('🔐 [LoginPage] isAdmin:', isAdmin);
 
       toast.success(`¡Bienvenido ${user?.full_name || user?.email}!`);
 
       // Redirect based on user role (EXACTLY like tutorías Login.tsx lines 79-84)
-      if (user?.role === 'admin' || user?.role === 'super_admin') {
+      if (isAdmin) {
         console.log('✅ [LoginPage] ES ADMIN - Redirigiendo a /admin');
         navigate('/admin', { replace: true });
       } else {

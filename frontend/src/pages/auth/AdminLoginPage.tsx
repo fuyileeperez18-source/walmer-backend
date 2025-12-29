@@ -37,8 +37,15 @@ export function AdminLoginPage() {
           duration: 5000,
           icon: '🚫',
         });
-        // Logout si no es admin
+        // Logout si no es admin - actualizar estado explícitamente
         await useAuthStore.getState().signOut();
+        // Forzar actualización del estado
+        useAuthStore.setState({
+          user: null,
+          profile: null,
+          isAuthenticated: false,
+          isLoading: false
+        });
         return;
       }
 
