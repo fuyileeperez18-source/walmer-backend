@@ -37,9 +37,14 @@ import { useAuthStore } from '@/stores/authStore';
 import { formatCurrency, generateOrderNumber } from '@/lib/utils';
 import { orderService } from '@/lib/services';
 import { cn } from '@/lib/utils';
+import { SimulatedPaymentForm } from '@/components/checkout/SimulatedPaymentForm';
 
-// Initialize Stripe
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51Demo123456789');
+// Check if Stripe is configured
+const STRIPE_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+const IS_SIMULATED_MODE = !STRIPE_KEY || STRIPE_KEY === 'pk_test_51Demo123456789';
+
+// Initialize Stripe only if we have a real key
+const stripePromise = !IS_SIMULATED_MODE ? loadStripe(STRIPE_KEY) : null;
 
 // Form schemas
 const shippingSchema = z.object({
@@ -633,15 +638,25 @@ export function CheckoutPage() {
                     </div>
                   )}
 
-                  <Elements stripe={stripePromise}>
-                    <PaymentForm
+                  {IS_SIMULATED_MODE ? (
+                    <SimulatedPaymentForm
                       onSuccess={handlePaymentSuccess}
                       onBack={() => setCurrentStep(0)}
                       total={total}
                       isProcessing={isProcessing}
                       setIsProcessing={setIsProcessing}
                     />
-                  </Elements>
+                  ) : (
+                    <Elements stripe={stripePromise}>
+                      <PaymentForm
+                        onSuccess={handlePaymentSuccess}
+                        onBack={() => setCurrentStep(0)}
+                        total={total}
+                        isProcessing={isProcessing}
+                        setIsProcessing={setIsProcessing}
+                      />
+                    </Elements>
+                  )}
 
                   {/* Payment methods icons */}
                   <div className="flex items-center justify-center gap-4 mt-8 pt-8 border-t border-primary-800">

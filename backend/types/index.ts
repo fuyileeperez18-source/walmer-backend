@@ -232,6 +232,7 @@ export interface Order {
   payment_status: PaymentStatus;
   payment_method: string;
   payment_id?: string;
+  stripe_payment_intent_id?: string;
   shipping_address: Address;
   billing_address: Address;
   tracking_number?: string;

@@ -80,7 +80,8 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response, next: Nex
       billing_address: data.billing_address as any,
       notes: data.notes,
       coupon_code: data.coupon_code,
-    }, data.items);
+      items: data.items as any,
+    });
     res.status(201).json({ success: true, data: order });
   } catch (error) {
     next(error);
