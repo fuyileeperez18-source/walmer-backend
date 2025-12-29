@@ -219,14 +219,15 @@ export function HomePage() {
                   onClick={() => navigate('/shop')}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="group relative inline-flex items-center justify-center gap-3 px-8 py-4 bg-white text-black font-semibold rounded-full overflow-hidden border-2 border-white shadow-lg shadow-white/20 transition-all duration-300 hover:shadow-xl hover:shadow-white/30"
+                  className="group relative inline-flex items-center justify-center gap-3 px-8 py-4 bg-white text-black font-bold rounded-full overflow-hidden border-4 border-white shadow-2xl shadow-black/50 transition-all duration-300 hover:shadow-2xl hover:shadow-white/50 backdrop-blur-sm"
+                  style={{ boxShadow: '0 10px 40px rgba(255,255,255,0.4), 0 0 0 2px rgba(0,0,0,0.8)' }}
                 >
-                  <span className="relative z-10 flex items-center gap-2">
-                    <ShoppingBag className="h-5 w-5" />
+                  <span className="relative z-10 flex items-center gap-2 text-lg">
+                    <ShoppingBag className="h-6 w-6" />
                     Comprar Ahora
-                    <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="h-6 w-6 transition-transform group-hover:translate-x-1" />
                   </span>
-                  <div className="absolute inset-0 bg-gray-100 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-100 to-white translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-300" />
                 </motion.button>
                 <Button variant="outline" leftIcon={<Play className="h-4 w-4" />}>
                   Ver Lookbook
