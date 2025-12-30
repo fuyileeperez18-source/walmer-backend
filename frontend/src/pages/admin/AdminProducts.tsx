@@ -40,6 +40,7 @@ const productTypeOptions = [
   { value: 'camiseta', label: 'Camiseta' },
   { value: 'camisa', label: 'Camisa' },
   { value: 'pantalon', label: 'Pantalón' },
+  { value: 'jean', label: 'Jean' },
   { value: 'chaqueta', label: 'Chaqueta' },
   { value: 'sudadera', label: 'Sudadera' },
   { value: 'short', label: 'Short' },
@@ -48,6 +49,18 @@ const productTypeOptions = [
   { value: 'vestido', label: 'Vestido' },
   { value: 'falda', label: 'Falda' },
   { value: 'otro', label: 'Otro' },
+];
+
+const styleTypeOptions = [
+  { value: '', label: 'Todos los estilos' },
+  { value: 'aesthetic', label: 'Aesthetic' },
+  { value: 'urbano', label: 'Urbano' },
+  { value: 'casual', label: 'Casual' },
+  { value: 'formal', label: 'Formal' },
+  { value: 'deportivo', label: 'Deportivo' },
+  { value: 'vintage', label: 'Vintage' },
+  { value: 'minimalista', label: 'Minimalista' },
+  { value: 'streetwear', label: 'Streetwear' },
 ];
 
 const sizeOptions = [
@@ -135,6 +148,9 @@ export function AdminProducts() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [productTypeFilter, setProductTypeFilter] = useState('');
+  const [styleTypeFilter, setStyleTypeFilter] = useState('');
+  const [genderFilter, setGenderFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -145,6 +161,7 @@ export function AdminProducts() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showFilters, setShowFilters] = useState(false);
   const [formData, setFormData] = useState<FormData>(initialFormData);
 
   const itemsPerPage = 12;
@@ -185,13 +202,25 @@ export function AdminProducts() {
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.sku?.toLowerCase().includes(searchQuery.toLowerCase());
+      product.sku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.brand?.toLowerCase().includes(searchQuery.toLowerCase());
+
     const matchesCategory = !categoryFilter || product.category_id === categoryFilter;
+
+    const matchesProductType = !productTypeFilter || product.product_type === productTypeFilter;
+
+    const matchesStyleType = !styleTypeFilter ||
+      product.tags?.some(tag => tag.toLowerCase() === styleTypeFilter.toLowerCase());
+
+    const matchesGender = !genderFilter || product.gender === genderFilter;
+
     const matchesStatus =
       statusFilter === 'all' ||
       (statusFilter === 'active' && product.is_active) ||
       (statusFilter === 'inactive' && !product.is_active);
-    return matchesSearch && matchesCategory && matchesStatus;
+
+    return matchesSearch && matchesCategory && matchesProductType &&
+           matchesStyleType && matchesGender && matchesStatus;
   });
 
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -342,32 +371,36 @@ export function AdminProducts() {
 
       {/* Filters */}
       <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-4 border border-white/10">
-        <div className="flex flex-col lg:flex-row gap-4">
+        {/* Main Search & Actions */}
+        <div className="flex flex-col lg:flex-row gap-4 mb-4">
           {/* Search */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
             <input
               type="text"
-              placeholder="Buscar productos por nombre o SKU..."
+              placeholder="Buscar productos por nombre, SKU o marca..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 h-11 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all"
             />
           </div>
 
-          {/* Category Filter */}
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all"
+          {/* Filter Toggle Button */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn(
+              'h-11 px-4 bg-white/5 border border-white/10 rounded-xl transition-all flex items-center gap-2',
+              showFilters ? 'bg-white text-black' : 'text-white hover:bg-white/10'
+            )}
           >
-            <option value="" className="bg-gray-900">Todas las categorías</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.id} className="bg-gray-900">
-                {cat.name}
-              </option>
-            ))}
-          </select>
+            <Filter className="h-5 w-5" />
+            <span className="hidden sm:inline">Filtros</span>
+            {(productTypeFilter || styleTypeFilter || genderFilter || categoryFilter) && (
+              <span className="bg-emerald-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {[productTypeFilter, styleTypeFilter, genderFilter, categoryFilter].filter(Boolean).length}
+              </span>
+            )}
+          </button>
 
           {/* Status Filter */}
           <select
@@ -375,7 +408,7 @@ export function AdminProducts() {
             onChange={(e) => setStatusFilter(e.target.value as any)}
             className="h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all"
           >
-            <option value="all" className="bg-gray-900">Todos los estados</option>
+            <option value="all" className="bg-gray-900">Todos</option>
             <option value="active" className="bg-gray-900">Activos</option>
             <option value="inactive" className="bg-gray-900">Inactivos</option>
           </select>
@@ -407,6 +440,119 @@ export function AdminProducts() {
             <RefreshCw className={`h-5 w-5 text-white ${isLoading ? 'animate-spin' : ''}`} />
           </IconButton>
         </div>
+
+        {/* Advanced Filters (Collapsible) */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-4 border-t border-white/10">
+                {/* Product Type Filter */}
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1.5">Tipo de Producto</label>
+                  <select
+                    value={productTypeFilter}
+                    onChange={(e) => {
+                      setProductTypeFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full h-10 px-3 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all"
+                  >
+                    <option value="" className="bg-gray-900">Todos</option>
+                    {productTypeOptions.filter(opt => opt.value).map((opt) => (
+                      <option key={opt.value} value={opt.value} className="bg-gray-900">
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Style Type Filter */}
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1.5">Estilo</label>
+                  <select
+                    value={styleTypeFilter}
+                    onChange={(e) => {
+                      setStyleTypeFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full h-10 px-3 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all"
+                  >
+                    {styleTypeOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value} className="bg-gray-900">
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Gender Filter */}
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1.5">Género</label>
+                  <select
+                    value={genderFilter}
+                    onChange={(e) => {
+                      setGenderFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full h-10 px-3 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all"
+                  >
+                    <option value="" className="bg-gray-900">Todos</option>
+                    {genderOptions.filter(opt => opt.value).map((opt) => (
+                      <option key={opt.value} value={opt.value} className="bg-gray-900">
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Category Filter */}
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1.5">Categoría</label>
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => {
+                      setCategoryFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full h-10 px-3 bg-white/5 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all"
+                  >
+                    <option value="" className="bg-gray-900">Todas</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id} className="bg-gray-900">
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Clear Filters Button */}
+              {(productTypeFilter || styleTypeFilter || genderFilter || categoryFilter) && (
+                <div className="pt-3 flex justify-end">
+                  <button
+                    onClick={() => {
+                      setProductTypeFilter('');
+                      setStyleTypeFilter('');
+                      setGenderFilter('');
+                      setCategoryFilter('');
+                      setCurrentPage(1);
+                    }}
+                    className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1"
+                  >
+                    <X className="h-4 w-4" />
+                    Limpiar filtros
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Stats Summary */}
@@ -750,6 +896,28 @@ export function AdminProducts() {
                     onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                     placeholder="Marca"
                   />
+                </div>
+              </div>
+
+              {/* Material & Estilo */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Material</label>
+                  <select
+                    value={formData.material}
+                    onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+                    className="w-full h-11 px-4 bg-gray-50 border-none rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {materialOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Estilo</label>
+                  <div className="text-xs text-gray-500 mb-1">Los estilos se agregan como tags (aesthetic, urbano, etc.)</div>
                 </div>
               </div>
 
