@@ -2,8 +2,11 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { orderService } from '../services/order.service.js';
 import { stripeService } from '../services/stripe.service.js';
+import { mercadopagoService } from '../services/mercadopago.service.js';
+import { wompiService } from '../services/wompi.service.js';
 import { authenticate, requireAdmin } from '../middleware/auth.js';
 import type { AuthRequest, OrderStatus } from '../types/index.js';
+import { env } from '../config/env.js';
 
 const router = Router();
 
@@ -118,6 +121,243 @@ router.post('/confirm-payment', authenticate, async (req: AuthRequest, res: Resp
     const payment = await stripeService.confirmPayment(paymentIntentId);
 
     res.json({ success: true, data: payment });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ==================== MERCADO PAGO ROUTES ====================
+
+// Create Mercado Pago preference
+router.post('/mercadopago/create-preference', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { items, orderId, payer } = z.object({
+      items: z.array(z.object({
+        title: z.string(),
+        description: z.string().optional(),
+        quantity: z.number().int().positive(),
+        unit_price: z.number().positive(),
+      })),
+      orderId: z.string().optional(),
+      payer: z.object({
+        name: z.string().optional(),
+        surname: z.string().optional(),
+        email: z.string().email().optional(),
+        phone: z.object({
+          area_code: z.string().optional(),
+          number: z.string().optional(),
+        }).optional(),
+      }).optional(),
+    }).parse(req.body);
+
+    const preference = await mercadopagoService.createPreference({
+      items: items.map((item, index) => ({
+        id: `item_${index}`,
+        title: item.title,
+        description: item.description,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        currency_id: 'COP',
+      })),
+      payer,
+      back_urls: {
+        success: `${env.FRONTEND_URL}/checkout/success`,
+        failure: `${env.FRONTEND_URL}/checkout/failure`,
+        pending: `${env.FRONTEND_URL}/checkout/pending`,
+      },
+      auto_return: 'approved',
+      external_reference: orderId,
+      metadata: {
+        user_id: req.user!.id,
+        order_id: orderId || '',
+      },
+    });
+
+    res.json({ success: true, data: preference });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get Mercado Pago payment status
+router.get('/mercadopago/payment/:paymentId', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const payment = await mercadopagoService.getPayment(req.params.paymentId);
+    res.json({ success: true, data: payment });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Mercado Pago Webhook (IPN - Instant Payment Notification)
+router.post('/mercadopago/webhook', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { type, data } = req.body;
+
+    console.log('📬 [MERCADOPAGO WEBHOOK] Received:', { type, data });
+
+    // Mercado Pago sends different types of notifications
+    if (type === 'payment') {
+      const paymentId = data.id;
+      const payment = await mercadopagoService.processWebhook(paymentId, type);
+
+      if (payment && payment.status === 'approved') {
+        console.log('✅ [MERCADOPAGO WEBHOOK] Payment approved:', paymentId);
+        // Update order status if needed
+        // You can add logic here to update your order based on external_reference
+      }
+    }
+
+    // Always respond 200 to acknowledge receipt
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('❌ [MERCADOPAGO WEBHOOK] Error:', error);
+    // Still respond 200 to avoid retries
+    res.status(200).json({ success: false });
+  }
+});
+
+// Simulate successful Mercado Pago payment (only in dev/testing)
+router.post('/mercadopago/simulate-payment', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!mercadopagoService.isSimulatedMode()) {
+      res.status(400).json({
+        success: false,
+        error: 'This endpoint is only available in simulated mode'
+      });
+      return;
+    }
+
+    const { preferenceId, amount } = z.object({
+      preferenceId: z.string(),
+      amount: z.number().positive(),
+    }).parse(req.body);
+
+    const payment = await mercadopagoService.simulatePaymentSuccess(preferenceId, amount);
+
+    res.json({ success: true, data: payment });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// ==================== WOMPI ROUTES ====================
+
+// Create Wompi transaction
+router.post('/wompi/create-transaction', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const { items, orderId, customerEmail, shippingAddress } = z.object({
+      items: z.array(z.object({
+        title: z.string(),
+        quantity: z.number().int().positive(),
+        unit_price: z.number().positive(),
+      })),
+      orderId: z.string().optional(),
+      customerEmail: z.string().email(),
+      shippingAddress: z.object({
+        address_line_1: z.string().optional(),
+        address_line_2: z.string().optional(),
+        country: z.string().optional(),
+        region: z.string().optional(),
+        city: z.string().optional(),
+        name: z.string().optional(),
+        phone_number: z.string().optional(),
+      }).optional(),
+    }).parse(req.body);
+
+    // Calculate total amount in cents
+    const totalAmountInCents = items.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+
+    // Generate reference
+    const reference = orderId || `ORDER_${Date.now()}_${req.user!.id}`;
+
+    // Create transaction
+    const transaction = await wompiService.createTransaction({
+      amount_in_cents: totalAmountInCents,
+      currency: 'COP',
+      customer_email: customerEmail,
+      reference,
+      redirect_url: `${env.FRONTEND_URL}/checkout/wompi/callback`,
+      shipping_address: shippingAddress,
+      customer_data: {
+        full_name: shippingAddress?.name,
+        phone_number: shippingAddress?.phone_number,
+      },
+    });
+
+    // Generate integrity signature for widget
+    const integritySignature = wompiService.generateIntegritySignature(
+      reference,
+      totalAmountInCents,
+      'COP'
+    );
+
+    res.json({
+      success: true,
+      data: {
+        ...transaction,
+        public_key: env.WOMPI_PUBLIC_KEY,
+        integrity_signature: integritySignature,
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Get Wompi transaction status
+router.get('/wompi/transaction/:transactionId', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const transaction = await wompiService.getTransaction(req.params.transactionId);
+    res.json({ success: true, data: transaction });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Wompi Webhook
+router.post('/wompi/webhook', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const signature = req.headers['x-wompi-signature'] as string;
+    const timestamp = req.headers['x-wompi-timestamp'] as string;
+    const eventData = req.body;
+
+    console.log('📬 [WOMPI WEBHOOK] Received:', eventData);
+
+    const result = await wompiService.processWebhook(eventData, signature, timestamp);
+
+    if (result && result.status === 'APPROVED') {
+      console.log('✅ [WOMPI WEBHOOK] Transaction approved:', result.id);
+      // Update order status if needed based on reference
+    }
+
+    // Always respond 200 to acknowledge receipt
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('❌ [WOMPI WEBHOOK] Error:', error);
+    // Still respond 200 to avoid retries
+    res.status(200).json({ success: false });
+  }
+});
+
+// Simulate successful Wompi payment (only in dev/testing)
+router.post('/wompi/simulate-payment', authenticate, async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!wompiService.isSimulatedMode()) {
+      res.status(400).json({
+        success: false,
+        error: 'This endpoint is only available in simulated mode'
+      });
+      return;
+    }
+
+    const { transactionId } = z.object({
+      transactionId: z.string(),
+    }).parse(req.body);
+
+    const transaction = await wompiService.simulatePaymentSuccess(transactionId);
+
+    res.json({ success: true, data: transaction });
   } catch (error) {
     next(error);
   }

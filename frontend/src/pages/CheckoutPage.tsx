@@ -38,6 +38,8 @@ import { formatCurrency, generateOrderNumber } from '@/lib/utils';
 import { orderService } from '@/lib/services';
 import { cn } from '@/lib/utils';
 import { SimulatedPaymentForm } from '@/components/checkout/SimulatedPaymentForm';
+import { MercadoPagoPayment } from '@/components/checkout/MercadoPagoPayment';
+import { WompiPayment } from '@/components/checkout/WompiPayment';
 
 // Check if Stripe is configured
 const STRIPE_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
@@ -243,6 +245,8 @@ export function CheckoutPage() {
   const [shippingData, setShippingData] = useState<ShippingFormData | null>(null);
   const [orderNumber, setOrderNumber] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'mercadopago' | 'wompi' | 'stripe' | 'cash_on_delivery'>('mercadopago');
+  const [paymentProvider, setPaymentProvider] = useState<'mercadopago' | 'wompi' | 'stripe'>('mercadopago');
 
   const { items, getSubtotal, clearCart } = useCartStore();
   const { user, isAuthenticated } = useAuthStore();
@@ -284,6 +288,62 @@ export function CheckoutPage() {
     setCurrentStep(1);
   };
 
+  const handleCashOnDelivery = async () => {
+    const newOrderNumber = generateOrderNumber();
+    setOrderNumber(newOrderNumber);
+    setIsProcessing(true);
+
+    try {
+      const subtotal = getSubtotal();
+      const selectedShipping = shippingMethods.find((m) => m.id === shippingMethod);
+      const shippingCost = subtotal >= 200000 ? 0 : (selectedShipping?.price || 0);
+      const tax = subtotal * 0.08;
+      const total = subtotal + shippingCost + tax;
+
+      const orderData = {
+        user_id: user?.id,
+        order_number: newOrderNumber,
+        subtotal,
+        discount: 0,
+        shipping_cost: shippingCost,
+        tax,
+        total,
+        status: 'pending' as const,
+        payment_status: 'pending' as const,
+        payment_method: 'cash_on_delivery',
+        shipping_address: {
+          email: shippingData?.email,
+          firstName: shippingData?.firstName,
+          lastName: shippingData?.lastName,
+          phone: shippingData?.phone,
+          address: shippingData?.address,
+          apartment: shippingData?.apartment,
+          city: shippingData?.city,
+          state: shippingData?.state,
+          postalCode: shippingData?.postalCode,
+          country: shippingData?.country,
+        },
+        items: items.map((item) => ({
+          product_id: item.product.id,
+          variant_id: item.variant?.id,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      } as any;
+
+      await orderService.create(orderData);
+
+      setCurrentStep(2);
+      clearCart();
+      toast.success('¡Pedido creado! Pagarás cuando recibas tu pedido.');
+    } catch (error: any) {
+      console.error('Error saving order:', error);
+      toast.error('Hubo un error creando tu pedido. Por favor intenta de nuevo.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handlePaymentSuccess = async (paymentId: string) => {
     const newOrderNumber = generateOrderNumber();
     setOrderNumber(newOrderNumber);
@@ -307,7 +367,7 @@ export function CheckoutPage() {
         total,
         status: 'confirmed' as const,
         payment_status: 'paid' as const,
-        payment_method: 'card',
+        payment_method: 'prepaid',
         payment_id: paymentId,
         stripe_payment_intent_id: paymentId,
         shipping_address: {
@@ -351,8 +411,9 @@ export function CheckoutPage() {
       <div className="container mx-auto px-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <Link to="/" className="text-2xl font-bold text-white">
-            MELO SPORTT
+          <Link to="/" className="flex items-center gap-3">
+            <img src="/logo.svg" alt="MELO SPORTT" className="h-10 w-auto" />
+            <span className="text-xl font-bold text-white">MELO SPORTT</span>
           </Link>
           <div className="flex items-center gap-2 text-sm text-gray-400">
             <Lock className="h-4 w-4" />
@@ -638,24 +699,219 @@ export function CheckoutPage() {
                     </div>
                   )}
 
-                  {IS_SIMULATED_MODE ? (
-                    <SimulatedPaymentForm
+                  {/* Payment method selection */}
+                  <div className="mb-8">
+                    <h3 className="text-lg font-medium text-white mb-4">Método de Pago</h3>
+                    <div className="grid gap-4">
+                      {/* Mercado Pago - RECOMENDADO */}
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          setPaymentMethod('mercadopago');
+                          setPaymentProvider('mercadopago');
+                        }}
+                        className={cn(
+                          'p-4 rounded-lg border-2 transition-all text-left relative overflow-hidden',
+                          paymentMethod === 'mercadopago'
+                            ? 'border-green-500 bg-green-500/10'
+                            : 'border-primary-700 bg-primary-800 hover:border-primary-600'
+                        )}
+                      >
+                        {/* Badge de recomendado */}
+                        <div className="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                          RECOMENDADO - SPLIT PAYMENT
+                        </div>
+
+                        <div className="flex items-start justify-between mt-2">
+                          <div className="flex items-start gap-3 flex-1 pr-4">
+                            <CreditCard className="h-5 w-5 text-white mt-1 flex-shrink-0" />
+                            <div className="flex-1">
+                              <p className="font-bold text-white text-lg mb-1">Mercado Pago</p>
+                              <p className="text-sm text-gray-300 mb-2">
+                                Paga con tarjeta débito/crédito, Nequi, Daviplata o transferencia bancaria
+                              </p>
+                              <ul className="text-xs text-gray-400 space-y-1">
+                                <li>✓ <span className="text-green-400 font-semibold">Split Payment automático (12% comisión)</span></li>
+                                <li>✓ Pago seguro y protegido</li>
+                                <li>✓ Acepta todas las tarjetas débito/crédito</li>
+                                <li>✓ Incluye Nequi, Daviplata y PSE</li>
+                                <li>✓ Confirmación instantánea</li>
+                              </ul>
+                            </div>
+                          </div>
+                          {paymentMethod === 'mercadopago' && (
+                            <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                          )}
+                        </div>
+                      </motion.button>
+
+                      {/* Wompi - Nueva opción */}
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          setPaymentMethod('wompi');
+                          setPaymentProvider('wompi');
+                        }}
+                        className={cn(
+                          'p-4 rounded-lg border-2 transition-all text-left relative overflow-hidden',
+                          paymentMethod === 'wompi'
+                            ? 'border-blue-500 bg-blue-500/10'
+                            : 'border-primary-700 bg-primary-800 hover:border-primary-600'
+                        )}
+                      >
+                        {/* Badge de Bancolombia */}
+                        <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                          BANCOLOMBIA
+                        </div>
+
+                        <div className="flex items-start justify-between mt-2">
+                          <div className="flex items-start gap-3 flex-1 pr-4">
+                            <CreditCard className="h-5 w-5 text-white mt-1 flex-shrink-0" />
+                            <div className="flex-1">
+                              <p className="font-bold text-white text-lg mb-1">Wompi</p>
+                              <p className="text-sm text-gray-300 mb-2">
+                                Paga con tarjeta, Nequi, DaviPlata, PSE o Bancolombia
+                              </p>
+                              <ul className="text-xs text-gray-400 space-y-1">
+                                <li>✓ Propiedad de Bancolombia</li>
+                                <li>✓ DaviPlata con 17M+ usuarios</li>
+                                <li>✓ Cuotas con Bancolombia BNPL</li>
+                                <li>✓ Redime Puntos Colombia</li>
+                              </ul>
+                            </div>
+                          </div>
+                          {paymentMethod === 'wompi' && (
+                            <Check className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                          )}
+                        </div>
+                      </motion.button>
+
+                      {/* Pago Contra Entrega */}
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => setPaymentMethod('cash_on_delivery')}
+                        className={cn(
+                          'p-4 rounded-lg border-2 transition-all text-left',
+                          paymentMethod === 'cash_on_delivery'
+                            ? 'border-white bg-white/10'
+                            : 'border-primary-700 bg-primary-800 hover:border-primary-600'
+                        )}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-3 flex-1">
+                            <Truck className="h-5 w-5 text-white mt-1 flex-shrink-0" />
+                            <div className="flex-1">
+                              <p className="font-medium text-white mb-1">Pago Contra Entrega</p>
+                              <p className="text-sm text-gray-300 mb-2">
+                                Paga en efectivo cuando recibas tu pedido
+                              </p>
+                              <ul className="text-xs text-gray-400 space-y-1">
+                                <li>✓ Paga al recibir tu producto</li>
+                                <li>✓ Solo efectivo</li>
+                                <li>✓ Verifica antes de pagar</li>
+                              </ul>
+                            </div>
+                          </div>
+                          {paymentMethod === 'cash_on_delivery' && (
+                            <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                          )}
+                        </div>
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  {paymentMethod === 'cash_on_delivery' ? (
+                    <div>
+                      <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg mb-6">
+                        <p className="text-blue-400 text-sm">
+                          ⚠️ Con el pago contra entrega, pagarás el total de tu pedido en efectivo cuando lo recibas.
+                          Tu comisión del 12% se registrará automáticamente una vez el pedido sea entregado.
+                        </p>
+                      </div>
+                      <div className="flex gap-4">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setCurrentStep(0)}
+                          disabled={isProcessing}
+                          leftIcon={<ChevronLeft className="h-4 w-4" />}
+                        >
+                          Volver
+                        </Button>
+                        <Button
+                          type="button"
+                          className="flex-1"
+                          isLoading={isProcessing}
+                          disabled={isProcessing}
+                          onClick={handleCashOnDelivery}
+                          leftIcon={<Package className="h-4 w-4" />}
+                        >
+                          Confirmar Pedido - {formatCurrency(total)}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : paymentMethod === 'mercadopago' ? (
+                    <MercadoPagoPayment
+                      total={total}
+                      items={items.map((item) => ({
+                        title: item.product.name,
+                        quantity: item.quantity,
+                        unit_price: item.price,
+                      }))}
                       onSuccess={handlePaymentSuccess}
                       onBack={() => setCurrentStep(0)}
+                      isProcessing={isProcessing}
+                      setIsProcessing={setIsProcessing}
+                    />
+                  ) : paymentMethod === 'wompi' ? (
+                    <WompiPayment
                       total={total}
+                      items={items.map((item) => ({
+                        title: item.product.name,
+                        quantity: item.quantity,
+                        unit_price: item.price,
+                      }))}
+                      customerEmail={shippingData?.email || ''}
+                      shippingAddress={shippingData ? {
+                        address: shippingData.address,
+                        apartment: shippingData.apartment,
+                        city: shippingData.city,
+                        state: shippingData.state,
+                        country: shippingData.country,
+                        firstName: shippingData.firstName,
+                        lastName: shippingData.lastName,
+                        phone: shippingData.phone,
+                      } : undefined}
+                      onSuccess={handlePaymentSuccess}
+                      onBack={() => setCurrentStep(0)}
                       isProcessing={isProcessing}
                       setIsProcessing={setIsProcessing}
                     />
                   ) : (
-                    <Elements stripe={stripePromise}>
-                      <PaymentForm
-                        onSuccess={handlePaymentSuccess}
-                        onBack={() => setCurrentStep(0)}
-                        total={total}
-                        isProcessing={isProcessing}
-                        setIsProcessing={setIsProcessing}
-                      />
-                    </Elements>
+                    <>
+                      {IS_SIMULATED_MODE ? (
+                        <SimulatedPaymentForm
+                          onSuccess={handlePaymentSuccess}
+                          onBack={() => setCurrentStep(0)}
+                          total={total}
+                          isProcessing={isProcessing}
+                          setIsProcessing={setIsProcessing}
+                        />
+                      ) : (
+                        <Elements stripe={stripePromise}>
+                          <PaymentForm
+                            onSuccess={handlePaymentSuccess}
+                            onBack={() => setCurrentStep(0)}
+                            total={total}
+                            isProcessing={isProcessing}
+                            setIsProcessing={setIsProcessing}
+                          />
+                        </Elements>
+                      )}
+                    </>
                   )}
 
                   {/* Payment methods icons */}

@@ -1,0 +1,387 @@
+import axios from 'axios';
+import crypto from 'crypto';
+import { env } from '../config/env.js';
+import { AppError } from '../middleware/errorHandler.js';
+
+// Wompi API Configuration
+const WOMPI_API_URL = env.NODE_ENV === 'production'
+  ? 'https://production.wompi.co/v1'
+  : 'https://sandbox.wompi.co/v1';
+
+// Simulated mode flag
+const SIMULATED_MODE = !env.WOMPI_PRIVATE_KEY;
+
+// In-memory storage for simulated transactions
+const simulatedTransactions = new Map<string, {
+  id: string;
+  reference: string;
+  status: string;
+  amount_in_cents: number;
+  currency: string;
+  payment_method_type: string;
+  payment_method: any;
+  customer_email: string;
+  redirect_url: string;
+  created_at: number;
+}>();
+
+// Helper to generate fake IDs
+const generateFakeId = (prefix: string) =>
+  `${prefix}_simulated_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+export interface CreateTransactionData {
+  amount_in_cents: number;
+  currency: string;
+  customer_email: string;
+  payment_method?: {
+    type: string;
+    installments?: number;
+  };
+  reference: string;
+  redirect_url?: string;
+  payment_source_id?: number;
+  customer_data?: {
+    phone_number?: string;
+    full_name?: string;
+    legal_id?: string;
+    legal_id_type?: string;
+  };
+  shipping_address?: {
+    address_line_1?: string;
+    address_line_2?: string;
+    country?: string;
+    region?: string;
+    city?: string;
+    name?: string;
+    phone_number?: string;
+  };
+}
+
+export interface AcceptanceToken {
+  acceptance_token: string;
+  permalink: string;
+  type: string;
+}
+
+export const wompiService = {
+  /**
+   * Get acceptance token for terms and conditions
+   * Required before creating transactions
+   */
+  async getAcceptanceToken(): Promise<AcceptanceToken> {
+    // SIMULATED MODE
+    if (SIMULATED_MODE) {
+      console.log('🧪 [SIMULATED WOMPI] Getting acceptance token');
+      return {
+        acceptance_token: 'simulated_acceptance_token_' + Date.now(),
+        permalink: 'https://wompi.co/terms',
+        type: 'END_USER_POLICY',
+      };
+    }
+
+    // REAL MODE
+    try {
+      const response = await axios.get(`${WOMPI_API_URL}/merchants/${env.WOMPI_PUBLIC_KEY}`);
+
+      const presignedAcceptance = response.data.data.presigned_acceptance;
+
+      return {
+        acceptance_token: presignedAcceptance.acceptance_token,
+        permalink: presignedAcceptance.permalink,
+        type: presignedAcceptance.type,
+      };
+    } catch (error: any) {
+      console.error('Wompi API Error:', error.response?.data || error.message);
+      throw new AppError(
+        `Failed to get acceptance token: ${error.message}`,
+        500
+      );
+    }
+  },
+
+  /**
+   * Create a payment transaction
+   * Returns a transaction that can be used for checkout
+   */
+  async createTransaction(data: CreateTransactionData) {
+    // SIMULATED MODE
+    if (SIMULATED_MODE) {
+      console.log('🧪 [SIMULATED WOMPI] Creating transaction:', data);
+
+      const transactionId = generateFakeId('txn');
+      const checkoutUrl = `https://checkout.wompi.co/l/${transactionId}`;
+
+      const transaction = {
+        id: transactionId,
+        reference: data.reference,
+        status: 'PENDING',
+        amount_in_cents: data.amount_in_cents,
+        currency: data.currency,
+        payment_method_type: data.payment_method?.type || 'CARD',
+        payment_method: data.payment_method || {},
+        customer_email: data.customer_email,
+        redirect_url: checkoutUrl,
+        created_at: Date.now(),
+      };
+
+      simulatedTransactions.set(transactionId, transaction);
+
+      console.log('✅ [SIMULATED WOMPI] Transaction created:', {
+        id: transactionId,
+        reference: data.reference,
+        checkout_url: checkoutUrl,
+      });
+
+      return {
+        id: transactionId,
+        reference: data.reference,
+        status: 'PENDING',
+        checkout_url: checkoutUrl,
+        amount_in_cents: data.amount_in_cents,
+        currency: data.currency,
+      };
+    }
+
+    // REAL MODE
+    if (!env.WOMPI_PRIVATE_KEY || !env.WOMPI_PUBLIC_KEY) {
+      throw new AppError('Wompi is not configured', 500);
+    }
+
+    try {
+      // First, get acceptance token
+      const acceptanceToken = await this.getAcceptanceToken();
+
+      // Create transaction
+      const response = await axios.post(
+        `${WOMPI_API_URL}/transactions`,
+        {
+          acceptance_token: acceptanceToken.acceptance_token,
+          amount_in_cents: data.amount_in_cents,
+          currency: data.currency,
+          customer_email: data.customer_email,
+          payment_method: data.payment_method,
+          reference: data.reference,
+          redirect_url: data.redirect_url,
+          customer_data: data.customer_data,
+          shipping_address: data.shipping_address,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${env.WOMPI_PRIVATE_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const transaction = response.data.data;
+
+      // Generate checkout URL (Wompi Widget)
+      const checkoutUrl = `https://checkout.wompi.co/l/${transaction.id}`;
+
+      return {
+        id: transaction.id,
+        reference: transaction.reference,
+        status: transaction.status,
+        checkout_url: checkoutUrl,
+        amount_in_cents: transaction.amount_in_cents,
+        currency: transaction.currency,
+      };
+    } catch (error: any) {
+      console.error('Wompi API Error:', error.response?.data || error.message);
+      throw new AppError(
+        `Failed to create transaction: ${error.response?.data?.error?.reason || error.message}`,
+        500
+      );
+    }
+  },
+
+  /**
+   * Get transaction information
+   */
+  async getTransaction(transactionId: string) {
+    // SIMULATED MODE
+    if (SIMULATED_MODE) {
+      console.log('🧪 [SIMULATED WOMPI] Getting transaction:', transactionId);
+
+      const transaction = simulatedTransactions.get(transactionId);
+
+      if (!transaction) {
+        // Auto-create a successful transaction for testing
+        const newTransaction = {
+          id: transactionId,
+          reference: `ORDER_${Date.now()}`,
+          status: 'APPROVED',
+          amount_in_cents: 100000,
+          currency: 'COP',
+          payment_method_type: 'CARD',
+          payment_method: { type: 'CARD' },
+          customer_email: 'test@example.com',
+          redirect_url: '',
+          created_at: Date.now(),
+        };
+        simulatedTransactions.set(transactionId, newTransaction);
+        return newTransaction;
+      }
+
+      return transaction;
+    }
+
+    // REAL MODE
+    if (!env.WOMPI_PUBLIC_KEY) {
+      throw new AppError('Wompi is not configured', 500);
+    }
+
+    try {
+      const response = await axios.get(
+        `${WOMPI_API_URL}/transactions/${transactionId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${env.WOMPI_PUBLIC_KEY}`,
+          },
+        }
+      );
+
+      return response.data.data;
+    } catch (error: any) {
+      console.error('Wompi API Error:', error.response?.data || error.message);
+      throw new AppError(
+        `Failed to get transaction: ${error.message}`,
+        500
+      );
+    }
+  },
+
+  /**
+   * Verify event signature from webhook
+   */
+  verifyEventSignature(
+    signature: string,
+    timestamp: string,
+    eventData: any
+  ): boolean {
+    if (SIMULATED_MODE) {
+      console.log('🧪 [SIMULATED WOMPI] Skipping signature verification in simulated mode');
+      return true;
+    }
+
+    if (!env.WOMPI_EVENTS_SECRET) {
+      throw new AppError('Wompi events secret is not configured', 500);
+    }
+
+    // Concatenate the event properties
+    const concatenated = `${eventData.event}.${timestamp}.${JSON.stringify(eventData.data)}`;
+
+    // Generate HMAC signature
+    const expectedSignature = crypto
+      .createHmac('sha256', env.WOMPI_EVENTS_SECRET)
+      .update(concatenated)
+      .digest('hex');
+
+    return signature === expectedSignature;
+  },
+
+  /**
+   * Process webhook event from Wompi
+   */
+  async processWebhook(eventData: any, signature: string, timestamp: string) {
+    // Verify signature (skip in simulated mode)
+    if (!SIMULATED_MODE) {
+      const isValid = this.verifyEventSignature(signature, timestamp, eventData);
+
+      if (!isValid) {
+        throw new AppError('Invalid webhook signature', 401);
+      }
+    }
+
+    // Process different event types
+    switch (eventData.event) {
+      case 'transaction.updated':
+        return await this.getTransaction(eventData.data.transaction.id);
+
+      default:
+        console.log('Ignoring unknown webhook event:', eventData.event);
+        return null;
+    }
+  },
+
+  /**
+   * Generate payment link for checkout
+   * This creates a hosted checkout page for the customer
+   */
+  async generatePaymentLink(data: {
+    reference: string;
+    amount_in_cents: number;
+    currency: string;
+    customer_email: string;
+    redirect_url: string;
+    description?: string;
+  }) {
+    // Create transaction first
+    const transaction = await this.createTransaction({
+      amount_in_cents: data.amount_in_cents,
+      currency: data.currency,
+      customer_email: data.customer_email,
+      reference: data.reference,
+      redirect_url: data.redirect_url,
+    });
+
+    return {
+      transaction_id: transaction.id,
+      checkout_url: transaction.checkout_url,
+      reference: transaction.reference,
+    };
+  },
+
+  /**
+   * Simulate a successful payment (only in simulated mode)
+   */
+  async simulatePaymentSuccess(transactionId: string) {
+    if (!SIMULATED_MODE) {
+      throw new AppError('This method is only available in simulated mode', 400);
+    }
+
+    const transaction = simulatedTransactions.get(transactionId);
+
+    if (!transaction) {
+      throw new AppError('Transaction not found', 404);
+    }
+
+    transaction.status = 'APPROVED';
+    simulatedTransactions.set(transactionId, transaction);
+
+    console.log('✅ [SIMULATED WOMPI] Payment approved:', {
+      id: transactionId,
+      reference: transaction.reference,
+    });
+
+    return transaction;
+  },
+
+  /**
+   * Helper to check if running in simulated mode
+   */
+  isSimulatedMode() {
+    return SIMULATED_MODE;
+  },
+
+  /**
+   * Generate integrity signature for widget
+   * Required when using Wompi Widget on frontend
+   */
+  generateIntegritySignature(reference: string, amountInCents: number, currency: string): string {
+    if (SIMULATED_MODE) {
+      return 'simulated_integrity_signature';
+    }
+
+    if (!env.WOMPI_INTEGRITY_SECRET) {
+      throw new AppError('Wompi integrity secret is not configured', 500);
+    }
+
+    const concatenated = `${reference}${amountInCents}${currency}${env.WOMPI_INTEGRITY_SECRET}`;
+
+    return crypto
+      .createHash('sha256')
+      .update(concatenated)
+      .digest('hex');
+  },
+};

@@ -117,8 +117,9 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-12">
           {/* Brand */}
           <div className="col-span-2 md:col-span-3 lg:col-span-2">
-            <Link to="/" className="inline-block mb-6">
-              <span className="text-3xl font-bold text-white tracking-wider">MELO SPORTT</span>
+            <Link to="/" className="inline-flex items-center gap-3 mb-6">
+              <img src="/logo.svg" alt="MELO SPORTT" className="h-12 w-auto" />
+              <span className="text-2xl font-bold text-white tracking-wider">MELO SPORTT</span>
             </Link>
             <p className="text-gray-400 mb-6 max-w-sm">
               Moda premium para el individuo moderno. Descubre piezas atemporales creadas con atención al detalle.

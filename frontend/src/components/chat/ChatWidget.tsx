@@ -95,7 +95,7 @@ export function ChatWidget() {
   const welcomeMessage: typeof messages[0] = {
     id: 'welcome',
     conversation_id: 'local',
-    content: '¡Hola! 👋 Bienvenido a MELO SPORTT. Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?',
+    content: '¡Hola! 👋 Soy MELOBOT, tu asistente de MELO SPORTT. ¿En qué puedo ayudarte hoy?',
     sender_type: 'bot',
     message_type: 'text',
     is_read: true,
@@ -155,7 +155,7 @@ export function ChatWidget() {
                   <span className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 rounded-full border-2 border-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">Asistente MELO SPORTT</h3>
+                  <h3 className="font-semibold">MELOBOT</h3>
                   <p className="text-xs text-gray-600">En línea • Listo para ayudarte</p>
                 </div>
               </div>

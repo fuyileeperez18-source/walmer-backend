@@ -130,11 +130,16 @@ export function Header() {
             {/* Logo */}
             <Link to="/" className="flex-shrink-0">
               <motion.div
-                className="relative"
+                className="relative flex items-center gap-3"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <span className="text-2xl md:text-3xl font-bold text-white tracking-wider">
+                <img
+                  src="/logo.svg"
+                  alt="MELO SPORTT"
+                  className="h-10 md:h-12 w-auto"
+                />
+                <span className="text-xl md:text-2xl font-bold text-white tracking-wider hidden sm:block">
                   MELO SPORTT
                 </span>
                 <motion.span
@@ -221,6 +226,7 @@ export function Header() {
               <IconButton
                 onClick={() => navigate(isAuthenticated ? '/account' : '/login')}
                 aria-label="Account"
+                className="text-white"
               >
                 <User className="h-5 w-5" />
               </IconButton>
@@ -293,7 +299,10 @@ export function Header() {
             >
               <div className="p-6">
                 <div className="flex items-center justify-between mb-8">
-                  <span className="text-2xl font-bold text-white">MELO SPORTT</span>
+                  <div className="flex items-center gap-2">
+                    <img src="/logo.svg" alt="MELO SPORTT" className="h-8 w-auto" />
+                    <span className="text-xl font-bold text-white">MELO SPORTT</span>
+                  </div>
                   <IconButton onClick={toggleMobileMenu}>
                     <X className="h-6 w-6" />
                   </IconButton>

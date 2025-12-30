@@ -15,6 +15,9 @@ import { ShopPage } from '@/pages/ShopPage';
 import { ProductPage } from '@/pages/ProductPage';
 import { CartPage } from '@/pages/CartPage';
 import { CheckoutPage } from '@/pages/CheckoutPage';
+import { CheckoutSuccessPage } from '@/pages/CheckoutSuccessPage';
+import { CheckoutFailurePage } from '@/pages/CheckoutFailurePage';
+import { WompiCallbackPage } from '@/pages/WompiCallbackPage';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { RegisterPage } from '@/pages/auth/RegisterPage';
 import { AdminLoginPage } from '@/pages/auth/AdminLoginPage';
@@ -154,6 +157,10 @@ function App() {
 
           {/* Checkout (separate layout) */}
           <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+          <Route path="/checkout/failure" element={<CheckoutFailurePage />} />
+          <Route path="/checkout/pending" element={<CheckoutSuccessPage />} />
+          <Route path="/checkout/wompi/callback" element={<WompiCallbackPage />} />
 
           {/* Admin routes */}
           <Route

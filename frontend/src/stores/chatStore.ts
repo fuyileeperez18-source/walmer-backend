@@ -37,7 +37,7 @@ interface ChatState {
 
 // Predefined bot responses
 const botResponses: Record<string, string> = {
-  greeting: '¡Hola! 👋 Bienvenido a MELO SPORTT. ¿En qué puedo ayudarte hoy?',
+  greeting: '¡Hola! 👋 Soy MELOBOT, tu asistente de MELO SPORTT. ¿En qué puedo ayudarte hoy?',
   products: 'Tenemos una amplia variedad de productos. Puedes explorar nuestro catálogo en la sección de Productos o decirme qué estás buscando.',
   shipping: 'Realizamos envíos a toda Colombia. Los tiempos de entrega varían entre 2-5 días hábiles según tu ubicación en el país.',
   payment: 'Aceptamos todas las tarjetas de crédito/débito, transferencias bancarias y pagos en efectivo.',
