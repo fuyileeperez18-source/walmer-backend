@@ -1,0 +1,10 @@
+# Ignore backend - it's deployed on Render
+backend/
+migrations/
+*.md
+railway.json
+Procfile
+tsconfig.json
+RENDER_SETUP.md
+README-MIGRATIONS.md
+SISTEMA-PAGOS-SIMULADO.md
