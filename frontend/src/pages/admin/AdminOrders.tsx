@@ -146,16 +146,16 @@ export function AdminOrders() {
       {/* Table - Desktop */}
       <div className="hidden lg:block bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[800px]">
             <thead className="bg-gray-50">
               <tr className="border-b border-gray-200">
-                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Pedido</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Cliente</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Total</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Estado</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Pago</th>
-                <th className="text-left py-4 px-6 text-sm font-semibold text-black">Fecha</th>
-                <th className="text-right py-4 px-6 text-sm font-semibold text-black">Acciones</th>
+                <th className="text-left py-4 px-4 text-sm font-semibold text-black whitespace-nowrap">Pedido</th>
+                <th className="text-left py-4 px-4 text-sm font-semibold text-black whitespace-nowrap">Cliente</th>
+                <th className="text-left py-4 px-4 text-sm font-semibold text-black whitespace-nowrap">Total</th>
+                <th className="text-left py-4 px-4 text-sm font-semibold text-black whitespace-nowrap">Estado</th>
+                <th className="text-left py-4 px-4 text-sm font-semibold text-black whitespace-nowrap">Pago</th>
+                <th className="text-left py-4 px-4 text-sm font-semibold text-black whitespace-nowrap">Fecha</th>
+                <th className="text-right py-4 px-4 text-sm font-semibold text-black whitespace-nowrap">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -169,42 +169,42 @@ export function AdminOrders() {
                       animate={{ opacity: 1 }}
                       className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                     >
-                      <td className="py-4 px-6">
-                        <span className="text-black font-medium">#{order.order_number}</span>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <span className="text-black font-medium text-sm">#{order.order_number}</span>
                       </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-black text-sm font-medium">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2 min-w-[150px]">
+                          <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-black text-xs font-medium flex-shrink-0">
                             {order.user_id?.charAt(0).toUpperCase() || 'U'}
                           </div>
-                          <div>
-                            <p className="text-black font-medium">{order.user_id}</p>
+                          <div className="min-w-0">
+                            <p className="text-black font-medium text-sm truncate">{order.user_id}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="py-4 px-6 text-black font-medium">{formatCurrency(order.total)}</td>
-                      <td className="py-4 px-6">
+                      <td className="py-3 px-4 text-black font-medium text-sm whitespace-nowrap">{formatCurrency(order.total)}</td>
+                      <td className="py-3 px-4 whitespace-nowrap">
                         <span className={cn(
-                          'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium',
+                          'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
                           statusConfig[order.status as keyof typeof statusConfig]?.color || 'bg-gray-100 text-gray-800'
                         )}>
                           <StatusIcon className="h-3 w-3" />
                           {statusConfig[order.status as keyof typeof statusConfig]?.label || order.status}
                         </span>
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         <span className={cn(
-                          'text-sm font-medium',
+                          'text-xs font-medium',
                           paymentConfig[order.payment_status as keyof typeof paymentConfig]?.color || 'text-gray-600'
                         )}>
                           {paymentConfig[order.payment_status as keyof typeof paymentConfig]?.label || order.payment_status}
                         </span>
                       </td>
-                      <td className="py-4 px-6 text-gray-600 text-sm">
+                      <td className="py-3 px-4 text-gray-600 text-xs whitespace-nowrap">
                         {formatDate(order.created_at, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </td>
-                      <td className="py-4 px-6">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1">
                           <IconButton onClick={() => openOrderDetail(order)}>
                             <Eye className="h-4 w-4" />
                           </IconButton>

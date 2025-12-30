@@ -253,37 +253,39 @@ export function AdminMessages() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <Mail className="h-5 w-5 text-blue-600" />
-            <p className="text-gray-600 text-sm font-medium">Total</p>
+      {/* Stats - Solo mostrar si hay conversaciones */}
+      {conversations.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3 mb-2">
+              <Mail className="h-5 w-5 text-blue-600" />
+              <p className="text-gray-600 text-sm font-medium">Total</p>
+            </div>
+            <p className="text-2xl font-bold text-black">{stats.total}</p>
           </div>
-          <p className="text-2xl font-bold text-black">{stats.total}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <Clock className="h-5 w-5 text-yellow-600" />
-            <p className="text-gray-600 text-sm font-medium">Sin leer</p>
+          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3 mb-2">
+              <Clock className="h-5 w-5 text-yellow-600" />
+              <p className="text-gray-600 text-sm font-medium">Sin leer</p>
+            </div>
+            <p className="text-2xl font-bold text-black">{stats.unread}</p>
           </div>
-          <p className="text-2xl font-bold text-black">{stats.unread}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <ShoppingBag className="h-5 w-5 text-green-600" />
-            <p className="text-gray-600 text-sm font-medium">Con orden</p>
+          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3 mb-2">
+              <ShoppingBag className="h-5 w-5 text-green-600" />
+              <p className="text-gray-600 text-sm font-medium">Con orden</p>
+            </div>
+            <p className="text-2xl font-bold text-black">{stats.withOrder}</p>
           </div>
-          <p className="text-2xl font-bold text-black">{stats.withOrder}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-2">
-            <Package className="h-5 w-5 text-purple-600" />
-            <p className="text-gray-600 text-sm font-medium">Consultas</p>
+          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-3 mb-2">
+              <Package className="h-5 w-5 text-purple-600" />
+              <p className="text-gray-600 text-sm font-medium">Consultas</p>
+            </div>
+            <p className="text-2xl font-bold text-black">{stats.withProduct}</p>
           </div>
-          <p className="text-2xl font-bold text-black">{stats.withProduct}</p>
         </div>
-      </div>
+      )}
 
       {/* Search */}
       <div className="relative">
@@ -297,17 +299,26 @@ export function AdminMessages() {
         />
       </div>
 
-      {/* Chat Layout */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="flex h-[600px]">
-          {/* Sidebar - Lista de conversaciones */}
-          <div className={`${selectedConversation ? 'hidden lg:flex' : 'flex'} flex-col w-full lg:w-96 border-r border-gray-200`}>
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="font-semibold text-black">Conversaciones ({filteredConversations.length})</h2>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              {filteredConversations.length > 0 ? (
-                filteredConversations.map((conv) => (
+      {/* Chat Layout o Empty State */}
+      {conversations.length === 0 ? (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-16 text-center">
+          <MessageSquare className="w-20 h-20 text-gray-300 mx-auto mb-6" />
+          <h3 className="text-2xl font-bold text-black mb-3">No hay mensajes disponibles</h3>
+          <p className="text-gray-600 max-w-md mx-auto">
+            Cuando los clientes te envíen mensajes sobre productos o pedidos, aparecerán aquí.
+          </p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div className="flex h-[600px]">
+            {/* Sidebar - Lista de conversaciones */}
+            <div className={`${selectedConversation ? 'hidden lg:flex' : 'flex'} flex-col w-full lg:w-96 border-r border-gray-200`}>
+              <div className="p-4 border-b border-gray-200">
+                <h2 className="font-semibold text-black">Conversaciones ({filteredConversations.length})</h2>
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                {filteredConversations.length > 0 ? (
+                  filteredConversations.map((conv) => (
                   <button
                     key={conv.id}
                     onClick={() => setSelectedConversation(conv)}
@@ -530,7 +541,8 @@ export function AdminMessages() {
             )}
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

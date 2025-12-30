@@ -21,27 +21,27 @@ import { cn } from '@/lib/utils';
 
 const tabs = [
   { id: 'general', label: 'General', icon: Store },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'payments', label: 'Payments', icon: CreditCard },
-  { id: 'shipping', label: 'Shipping', icon: Truck },
+  { id: 'notifications', label: 'Notificaciones', icon: Bell },
+  { id: 'payments', label: 'Pagos', icon: CreditCard },
+  { id: 'shipping', label: 'Envíos', icon: Truck },
   { id: 'seo', label: 'SEO', icon: Globe },
-  { id: 'security', label: 'Security', icon: Shield },
+  { id: 'security', label: 'Seguridad', icon: Shield },
 ];
 
 const currencies = [
-  { value: 'USD', label: 'USD - US Dollar' },
+  { value: 'COP', label: 'COP - Peso Colombiano' },
+  { value: 'USD', label: 'USD - Dólar Estadounidense' },
   { value: 'EUR', label: 'EUR - Euro' },
-  { value: 'GBP', label: 'GBP - British Pound' },
-  { value: 'MXN', label: 'MXN - Mexican Peso' },
+  { value: 'MXN', label: 'MXN - Peso Mexicano' },
 ];
 
 const timezones = [
-  { value: 'America/New_York', label: 'Eastern Time (ET)' },
-  { value: 'America/Chicago', label: 'Central Time (CT)' },
-  { value: 'America/Denver', label: 'Mountain Time (MT)' },
-  { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
-  { value: 'Europe/London', label: 'London (GMT)' },
-  { value: 'Europe/Paris', label: 'Paris (CET)' },
+  { value: 'America/Bogota', label: 'Colombia (COT)' },
+  { value: 'America/New_York', label: 'Hora del Este (ET)' },
+  { value: 'America/Chicago', label: 'Hora Central (CT)' },
+  { value: 'America/Denver', label: 'Hora de Montaña (MT)' },
+  { value: 'America/Los_Angeles', label: 'Hora del Pacífico (PT)' },
+  { value: 'America/Mexico_City', label: 'Ciudad de México (CST)' },
 ];
 
 export function AdminSettings() {
@@ -53,7 +53,7 @@ export function AdminSettings() {
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsSaving(false);
-    toast.success('Settings saved successfully!');
+    toast.success('Configuración guardada exitosamente');
   };
 
   return (
@@ -116,7 +116,7 @@ export function AdminSettings() {
                       <span className="text-3xl font-bold text-black">M</span>
                     </div>
                     <Button variant="outline" leftIcon={<Upload className="h-4 w-4" />}>
-                      Upload New
+                      Subir Logo
                     </Button>
                   </div>
                 </div>
@@ -127,21 +127,21 @@ export function AdminSettings() {
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <Input label="Phone Number" type="tel" defaultValue="+1 234 567 890" />
-                  <Input label="WhatsApp Number" type="tel" defaultValue="+1 234 567 890" />
+                  <Input label="Teléfono" type="tel" defaultValue="+57 300 123 4567" />
+                  <Input label="WhatsApp" type="tel" defaultValue="+57 300 123 4567" />
                 </div>
 
                 <Textarea
-                  label="Store Description"
-                  defaultValue="Premium fashion for the modern individual. Discover timeless pieces crafted with attention to detail."
+                  label="Descripción de la Tienda"
+                  defaultValue="Moda deportiva premium. Descubre piezas atemporales diseñadas con atención al detalle."
                 />
 
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <Select label="Currency" options={currencies} defaultValue="USD" />
-                  <Select label="Timezone" options={timezones} defaultValue="America/New_York" />
+                  <Select label="Moneda" options={currencies} defaultValue="COP" />
+                  <Select label="Zona Horaria" options={timezones} defaultValue="America/Bogota" />
                 </div>
 
-                <Input label="Store Address" defaultValue="123 Fashion Street, New York, NY 10001" />
+                <Input label="Dirección de la Tienda" defaultValue="Calle 123 #45-67, Bogotá, Colombia" />
               </div>
             )}
 
