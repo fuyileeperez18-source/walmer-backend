@@ -274,6 +274,32 @@ export const categoryService = {
     return data as Category[];
   },
 
+  async getAllWithProductCount() {
+    const { data, error } = await supabase
+      .from('categories')
+      .select(`
+        *,
+        products!inner (id, is_active)
+      `)
+      .eq('is_active', true)
+      .eq('products.is_active', true)
+      .order('position');
+
+    if (error) throw error;
+
+    // Count products per category from the joined data
+    const categoriesWithCount = data.reduce((acc, category) => {
+      const productCount = category.products?.length || 0;
+      acc.push({
+        ...category,
+        product_count: productCount,
+      });
+      return acc;
+    }, [] as (Category & { product_count: number })[]);
+
+    return categoriesWithCount;
+  },
+
   async getBySlug(slug: string) {
     const { data, error } = await supabase
       .from('categories')

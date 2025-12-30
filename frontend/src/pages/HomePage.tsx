@@ -1,6 +1,7 @@
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Play, Star, Truck, Shield, RefreshCw, Headphones, ShoppingBag } from 'lucide-react';
+import { ArrowRight, Play, Star, Truck, Shield, RefreshCw, Headphones, ShoppingBag, MapPin, Clock, Phone, Navigation } from 'lucide-react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade, Pagination } from 'swiper/modules';
 import 'swiper/css';
@@ -10,6 +11,8 @@ import 'swiper/css/pagination';
 import { AnimatedSection, StaggerContainer, StaggerItem } from '@/components/animations/AnimatedSection';
 import { Button } from '@/components/ui/Button';
 import { ProductCard } from '@/components/ui/ProductCard';
+import { categoryService } from '@/lib/supabase';
+import type { Category } from '@/types';
 
 // Mock data - replace with real data from Supabase
 const heroSlides = [
@@ -36,11 +39,16 @@ const heroSlides = [
   },
 ];
 
-const categories = [
-  { id: '1', name: 'Camisetas', slug: 't-shirts', image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600', count: 45 },
-  { id: '2', name: 'Chaquetas', slug: 'jackets', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600', count: 32 },
-  { id: '3', name: 'Pantalones', slug: 'pants', image: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600', count: 28 },
-  { id: '4', name: 'Accesorios', slug: 'accessories', image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=600', count: 64 },
+interface CategoryWithCount extends Category {
+  product_count: number;
+}
+
+// Categories will be loaded from database
+const defaultCategories: CategoryWithCount[] = [
+  { id: '1', name: 'Camisetas', slug: 't-shirts', image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600', product_count: 0, position: 1, is_active: true },
+  { id: '2', name: 'Chaquetas', slug: 'jackets', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600', product_count: 0, position: 2, is_active: true },
+  { id: '3', name: 'Pantalones', slug: 'pants', image: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600', product_count: 0, position: 3, is_active: true },
+  { id: '4', name: 'Accesorios', slug: 'accessories', image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=600', product_count: 0, position: 4, is_active: true },
 ];
 
 const featuredProducts = [
@@ -147,6 +155,25 @@ const testimonials = [
 
 export function HomePage() {
   const navigate = useNavigate();
+  const [categories, setCategories] = useState<CategoryWithCount[]>(defaultCategories);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const data = await categoryService.getAllWithProductCount();
+        if (data && data.length > 0) {
+          setCategories(data);
+        }
+      } catch (error) {
+        console.error('Error loading categories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    }
+
+    loadCategories();
+  }, []);
 
   return (
     <div className="overflow-hidden">
@@ -297,7 +324,13 @@ export function HomePage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                     <div className="absolute bottom-6 left-6 right-6">
                       <h3 className="text-2xl font-bold text-white mb-1">{category.name}</h3>
-                      <p className="text-gray-300 text-sm">{category.count} Productos</p>
+                      <p className="text-gray-300 text-sm">
+                        {loadingCategories ? (
+                          <span className="inline-block w-8 h-4 bg-white/20 animate-pulse rounded" />
+                        ) : (
+                          `${category.product_count} Productos`
+                        )}
+                      </p>
                     </div>
                   </motion.div>
                 </Link>
@@ -494,6 +527,131 @@ export function HomePage() {
               </StaggerItem>
             ))}
           </StaggerContainer>
+        </div>
+      </section>
+
+      {/* Location Section */}
+      <section className="py-24 bg-primary-950">
+        <div className="container mx-auto px-6">
+          <AnimatedSection animation="fadeUp">
+            <div className="text-center mb-16">
+              <span className="text-sm text-gray-400 uppercase tracking-wider">Visítanos</span>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mt-2">Encuéntranos</h2>
+            </div>
+          </AnimatedSection>
+
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Map Container */}
+            <AnimatedSection animation="slideLeft">
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                className="relative rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border border-primary-800"
+              >
+                {/* Street View iframe */}
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!4v1767125254299!6m8!1m7!1s1XMT5bRvBnHCpslJ_lwVWw!2m2!1d10.43711374619797!2d-75.51578191333984!3f177.19962735201298!4f-0.36276961538061414!5f0.7820865974627469"
+                  width="100%"
+                  height="450"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Street View - Melo Sportt"
+                  className="w-full"
+                />
+              </motion.div>
+            </AnimatedSection>
+
+            {/* Location Info */}
+            <AnimatedSection animation="slideRight">
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-3xl font-bold text-white mb-4">Nuestra Tienda Física</h3>
+                  <p className="text-gray-400 text-lg">
+                    Visítanos en nuestro local y descubre toda nuestra colección en persona.
+                    Te esperamos para brindarte la mejor atención personalizada.
+                  </p>
+                </div>
+
+                {/* Address */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  className="flex items-start gap-4 p-6 bg-primary-900/50 rounded-xl border border-primary-800"
+                >
+                  <div className="flex-shrink-0 w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                    <MapPin className="h-6 w-6 text-black" />
+                  </div>
+                  <div>
+                    <h4 className="text-white font-semibold text-lg mb-1">Dirección</h4>
+                    <p className="text-gray-400">
+                      741 Cra. 17, Cartagena de Indias, Bolívar<br />
+                      <span className="text-gray-500 text-sm">Barrio El Laguito, cerca del Hotel Caribe</span>
+                    </p>
+                  </div>
+                </motion.div>
+
+                {/* Hours */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.1 }}
+                  className="flex items-start gap-4 p-6 bg-primary-900/50 rounded-xl border border-primary-800"
+                >
+                  <div className="flex-shrink-0 w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                    <Clock className="h-6 w-6 text-black" />
+                  </div>
+                  <div>
+                    <h4 className="text-white font-semibold text-lg mb-1">Horarios de Atención</h4>
+                    <div className="text-gray-400 space-y-1">
+                      <p>Lunes - Sábado: 9:00 AM - 7:00 PM</p>
+                      <p>Domingos: 10:00 AM - 5:00 PM</p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Phone */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2 }}
+                  className="flex items-start gap-4 p-6 bg-primary-900/50 rounded-xl border border-primary-800"
+                >
+                  <div className="flex-shrink-0 w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                    <Phone className="h-6 w-6 text-black" />
+                  </div>
+                  <div>
+                    <h4 className="text-white font-semibold text-lg mb-1">Contáctanos</h4>
+                    <p className="text-gray-400">
+                      +57 300 123 4567<br />
+                      <span className="text-gray-500 text-sm">WhatsApp disponible</span>
+                    </p>
+                  </div>
+                </motion.div>
+
+                {/* CTA Button */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <a
+                    href="https://www.google.com/maps/dir//10.4371137,-75.5157819/@10.4371137,-75.5157819,17z"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-3 w-full sm:w-auto px-8 py-4 bg-white text-black font-semibold rounded-full border-2 border-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+                  >
+                    <Navigation className="h-5 w-5" />
+                    Cómo Llegar
+                  </a>
+                </motion.div>
+              </div>
+            </AnimatedSection>
+          </div>
         </div>
       </section>
 
