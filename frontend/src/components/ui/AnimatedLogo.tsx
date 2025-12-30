@@ -47,7 +47,7 @@ export function AnimatedLogo({
         filter: [
           'drop-shadow(0 0 8px rgba(255,255,255,0.5))',
           'drop-shadow(0 0 16px rgba(255,255,255,0.7))',
-          'drop-shadow(0 0 8px rgba(255,255,255,0.5))',
+          'drop-shadow(0 0 8px rgba(255,255,255,0.5))'
         ],
         transition: {
           filter: {
@@ -120,7 +120,7 @@ export function AnimatedLogo({
   return (
     <motion.div
       className={`relative flex items-center gap-3 ${className}`}
-      variants={currentVariant}
+      variants={currentVariant as any}
       initial="initial"
       animate="animate"
       whileHover="hover"
@@ -131,7 +131,7 @@ export function AnimatedLogo({
       {/* Logo Image with advanced effects */}
       <div className="relative">
         <motion.img
-          src="/logo.svg"
+          src="https://res.cloudinary.com/dpqtlalhr/image/upload/v1767113974/MELO_SPORTT_logo_1_dxnwcv.svg"
           alt="MELO SPORTT"
           className={`${sizeMap[size]} w-auto relative z-10`}
           style={{
