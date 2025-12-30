@@ -39,16 +39,12 @@ const heroSlides = [
   },
 ];
 
-interface CategoryWithCount extends Category {
-  product_count: number;
-}
-
 // Categories will be loaded from database
-const defaultCategories: CategoryWithCount[] = [
-  { id: '1', name: 'Camisetas', slug: 't-shirts', image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600', product_count: 0, position: 1, is_active: true },
-  { id: '2', name: 'Chaquetas', slug: 'jackets', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600', product_count: 0, position: 2, is_active: true },
-  { id: '3', name: 'Pantalones', slug: 'pants', image: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600', product_count: 0, position: 3, is_active: true },
-  { id: '4', name: 'Accesorios', slug: 'accessories', image: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=600', product_count: 0, position: 4, is_active: true },
+const defaultCategories: (Category & { products_count: number })[] = [
+  { id: '1', name: 'Camisetas', slug: 't-shirts', image_url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600', products_count: 0, position: 1, is_active: true },
+  { id: '2', name: 'Chaquetas', slug: 'jackets', image_url: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600', products_count: 0, position: 2, is_active: true },
+  { id: '3', name: 'Pantalones', slug: 'pants', image_url: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600', products_count: 0, position: 3, is_active: true },
+  { id: '4', name: 'Accesorios', slug: 'accessories', image_url: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=600', products_count: 0, position: 4, is_active: true },
 ];
 
 const featuredProducts = [
@@ -155,7 +151,7 @@ const testimonials = [
 
 export function HomePage() {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState<CategoryWithCount[]>(defaultCategories);
+  const [categories, setCategories] = useState<(Category & { products_count: number })[]>(defaultCategories);
   const [loadingCategories, setLoadingCategories] = useState(true);
 
   useEffect(() => {
@@ -317,7 +313,7 @@ export function HomePage() {
                     className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-primary-900"
                   >
                     <img
-                      src={category.image}
+                      src={category.image_url}
                       alt={category.name}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
@@ -328,7 +324,7 @@ export function HomePage() {
                         {loadingCategories ? (
                           <span className="inline-block w-8 h-4 bg-white/20 animate-pulse rounded" />
                         ) : (
-                          `${category.product_count} Productos`
+                          `${category.products_count} Productos`
                         )}
                       </p>
                     </div>

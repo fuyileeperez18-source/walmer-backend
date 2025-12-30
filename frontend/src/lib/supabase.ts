@@ -279,7 +279,7 @@ export const categoryService = {
       .from('categories')
       .select(`
         *,
-        products!inner (id, is_active)
+        products!inner (id)
       `)
       .eq('is_active', true)
       .eq('products.is_active', true)
@@ -287,17 +287,13 @@ export const categoryService = {
 
     if (error) throw error;
 
-    // Count products per category from the joined data
-    const categoriesWithCount = data.reduce((acc, category) => {
-      const productCount = category.products?.length || 0;
-      acc.push({
-        ...category,
-        product_count: productCount,
-      });
-      return acc;
-    }, [] as (Category & { product_count: number })[]);
+    // Add product count to each category
+    const categoriesWithCount = data.map((category) => ({
+      ...category,
+      products_count: category.products?.length || 0,
+    }));
 
-    return categoriesWithCount;
+    return categoriesWithCount as (Category & { products_count: number })[];
   },
 
   async getBySlug(slug: string) {
