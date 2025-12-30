@@ -411,7 +411,7 @@ export function AdminCoupons() {
                       </IconButton>
                       <IconButton
                         onClick={() => openDeleteDialog(coupon)}
-                        variant="danger"
+                        className="hover:bg-red-500/20 hover:text-red-400"
                       >
                         <Trash2 className="h-4 w-4" />
                       </IconButton>

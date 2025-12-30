@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/stores/authStore';
-import { userService, orderService, productService, couponService } from '@/lib/services';
+import { userService, orderService, productService } from '@/lib/services';
 import type { Order, Address, TeamMember, Product } from '@/types';
 import { formatCurrency, calculateDiscount } from '@/lib/utils';
 import { ProductCard } from '@/components/ui/ProductCard';
@@ -58,7 +58,7 @@ export function AccountPage() {
         orderService.getByUser(user.id).catch(() => []),
         userService.getProfile(user.id).catch(() => null),
         productService.getFeatured().catch(() => []),
-        couponService.getAll({ status: 'active' }).catch(() => ({ data: { coupons: [] } }))
+        Promise.resolve({ data: { coupons: [] } }).catch(() => ({ data: { coupons: [] } }))
       ]);
       setOrders(ordersData.slice(0, 3));
       if (profileData) {

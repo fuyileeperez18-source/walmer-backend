@@ -322,7 +322,7 @@ export function AdminMessages() {
           </div>
           {stats.unread > 0 && (
             <Button
-              variant={filterUnread ? 'default' : 'outline'}
+              variant={filterUnread ? 'primary' : 'outline'}
               onClick={() => setFilterUnread(!filterUnread)}
               leftIcon={<Inbox className="h-4 w-4" />}
             >

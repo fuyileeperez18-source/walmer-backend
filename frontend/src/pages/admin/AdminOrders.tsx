@@ -172,7 +172,7 @@ export function AdminOrders() {
           </div>
           <div className="flex gap-2">
             <Button
-              variant={showFilters ? 'default' : 'outline'}
+              variant={showFilters ? 'primary' : 'outline'}
               onClick={() => setShowFilters(!showFilters)}
               leftIcon={<Filter className="h-4 w-4" />}
             >
