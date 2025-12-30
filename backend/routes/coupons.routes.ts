@@ -8,7 +8,7 @@ import {
   validateCoupon,
   incrementCouponUsage,
 } from '../controllers/coupons.controller';
-import { authenticateToken, isAdmin } from '../middleware/auth.middleware';
+import { authenticate, requireAdmin } from '../middleware/auth.middleware';
 
 const router = express.Router();
 
@@ -16,13 +16,13 @@ const router = express.Router();
 router.post('/validate', validateCoupon);
 
 // Protected routes (require authentication)
-router.post('/increment-usage', authenticateToken, incrementCouponUsage);
+router.post('/increment-usage', authenticate, incrementCouponUsage);
 
 // Admin routes
-router.get('/', authenticateToken, isAdmin, getAllCoupons);
-router.get('/:id', authenticateToken, isAdmin, getCouponById);
-router.post('/', authenticateToken, isAdmin, createCoupon);
-router.put('/:id', authenticateToken, isAdmin, updateCoupon);
-router.delete('/:id', authenticateToken, isAdmin, deleteCoupon);
+router.get('/', authenticate, requireAdmin, getAllCoupons);
+router.get('/:id', authenticate, requireAdmin, getCouponById);
+router.post('/', authenticate, requireAdmin, createCoupon);
+router.put('/:id', authenticate, requireAdmin, updateCoupon);
+router.delete('/:id', authenticate, requireAdmin, deleteCoupon);
 
 export default router;
