@@ -12,6 +12,7 @@ import {
   Filter,
   X,
   Check,
+  Image as ImageIcon,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -778,242 +779,375 @@ export function AdminProducts() {
               setIsAddModalOpen(false);
               setIsEditModalOpen(false);
             }}
-            title={isEditModalOpen ? 'Editar Producto' : 'Agregar Producto'}
+            title={isEditModalOpen ? 'Editar Producto' : 'Agregar Nuevo Producto'}
             size="xl"
+            hideCloseButton
           >
-            <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
-              {/* Basic Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Nombre del producto"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">SKU *</label>
-                  <Input
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    placeholder="SKU-001"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Precio *</label>
-                  <Input
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Precio Anterior</label>
-                  <Input
-                    type="number"
-                    value={formData.comparePrice}
-                    onChange={(e) => setFormData({ ...formData, comparePrice: e.target.value })}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
-                  <Input
-                    type="number"
-                    value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                    placeholder="0"
-                  />
+            <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+              {/* Header Section with Image Upload */}
+              <div className="bg-gradient-to-br from-primary-900/50 to-primary-800/30 rounded-2xl p-6 border border-white/10">
+                <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                  <div className="p-1.5 bg-white/10 rounded-lg">
+                    <ImageIcon className="h-4 w-4" />
+                  </div>
+                  Imágenes del Producto
+                </h3>
+                <ImageUpload
+                  images={productImages}
+                  onChange={setProductImages}
+                  maxImages={5}
+                  className="bg-transparent"
+                />
+              </div>
+
+              {/* Basic Info Section */}
+              <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                  <div className="p-1.5 bg-white/10 rounded-lg">
+                    <Check className="h-4 w-4" />
+                  </div>
+                  Información Básica
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Nombre del Producto *</label>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Ej: Camiseta Oversize Aesthetic"
+                      className="bg-white/5 border-white/10 text-white placeholder-gray-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">SKU *</label>
+                    <Input
+                      value={formData.sku}
+                      onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                      placeholder="SKU-001"
+                      className="bg-white/5 border-white/10 text-white placeholder-gray-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Precio *</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                      <Input
+                        type="number"
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        placeholder="0.00"
+                        className="pl-7 bg-white/5 border-white/10 text-white placeholder-gray-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Precio Anterior</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                      <Input
+                        type="number"
+                        value={formData.comparePrice}
+                        onChange={(e) => setFormData({ ...formData, comparePrice: e.target.value })}
+                        placeholder="0.00"
+                        className="pl-7 bg-white/5 border-white/10 text-white placeholder-gray-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Stock</label>
+                    <Input
+                      type="number"
+                      value={formData.quantity}
+                      onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                      placeholder="0"
+                      className="bg-white/5 border-white/10 text-white placeholder-gray-500"
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+              <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                  <div className="p-1.5 bg-white/10 rounded-lg">
+                    <Check className="h-4 w-4" />
+                  </div>
+                  Descripción
+                </h3>
                 <Textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Descripción del producto..."
+                  placeholder="Describe tu producto en detalle..."
                   rows={3}
+                  className="bg-white/5 border-white/10 text-white placeholder-gray-500 resize-none"
                 />
+                <p className="text-xs text-gray-500 mt-2">Una buena descripción ayuda a tus clientes a conocer mejor el producto</p>
               </div>
 
-              {/* Category & Type */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-                  <select
-                    value={formData.category_id}
-                    onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                    className="w-full h-11 px-4 bg-gray-50 border-none rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value="">Sin categoría</option>
-                    {categories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Producto</label>
-                  <select
-                    value={formData.productType}
-                    onChange={(e) => setFormData({ ...formData, productType: e.target.value })}
-                    className="w-full h-11 px-4 bg-gray-50 border-none rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    {productTypeOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Gender & Brand */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Género</label>
-                  <select
-                    value={formData.gender}
-                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                    className="w-full h-11 px-4 bg-gray-50 border-none rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    {genderOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Marca</label>
-                  <Input
-                    value={formData.brand}
-                    onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                    placeholder="Marca"
-                  />
-                </div>
-              </div>
-
-              {/* Material & Estilo */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Material</label>
-                  <select
-                    value={formData.material}
-                    onChange={(e) => setFormData({ ...formData, material: e.target.value })}
-                    className="w-full h-11 px-4 bg-gray-50 border-none rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    {materialOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Estilo</label>
-                  <div className="text-xs text-gray-500 mb-1">Los estilos se agregan como tags (aesthetic, urbano, etc.)</div>
+              {/* Classification - Unified Category & Type */}
+              <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                  <div className="p-1.5 bg-white/10 rounded-lg">
+                    <Check className="h-4 w-4" />
+                  </div>
+                  Clasificación
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Tipo de Producto</label>
+                    <div className="relative">
+                      <select
+                        value={formData.productType}
+                        onChange={(e) => setFormData({ ...formData, productType: e.target.value })}
+                        className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all appearance-none cursor-pointer"
+                      >
+                        <option value="" className="bg-gray-900">Seleccionar tipo...</option>
+                        {productTypeOptions.filter(opt => opt.value).map((opt) => (
+                          <option key={opt.value} value={opt.value} className="bg-gray-900">
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 rotate-90 pointer-events-none" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Género</label>
+                    <div className="relative">
+                      <select
+                        value={formData.gender}
+                        onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                        className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all appearance-none cursor-pointer"
+                      >
+                        {genderOptions.filter(opt => opt.value).map((opt) => (
+                          <option key={opt.value} value={opt.value} className="bg-gray-900">
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 rotate-90 pointer-events-none" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Categoría</label>
+                    <div className="relative">
+                      <select
+                        value={formData.category_id}
+                        onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                        className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all appearance-none cursor-pointer"
+                      >
+                        <option value="" className="bg-gray-900">Sin categoría</option>
+                        {categories.map((cat) => (
+                          <option key={cat.id} value={cat.id} className="bg-gray-900">
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 rotate-90 pointer-events-none" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Material</label>
+                    <div className="relative">
+                      <select
+                        value={formData.material}
+                        onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+                        className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 transition-all appearance-none cursor-pointer"
+                      >
+                        <option value="" className="bg-gray-900">Seleccionar...</option>
+                        {materialOptions.filter(opt => opt.value).map((opt) => (
+                          <option key={opt.value} value={opt.value} className="bg-gray-900">
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 rotate-90 pointer-events-none" />
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Sizes & Colors */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tallas</label>
-                <div className="flex flex-wrap gap-2">
-                  {sizeOptions.map((size) => (
-                    <button
-                      key={size.value}
-                      type="button"
-                      onClick={() => {
-                        const newSizes = formData.sizes.includes(size.value)
-                          ? formData.sizes.filter((s) => s !== size.value)
-                          : [...formData.sizes, size.value];
-                        setFormData({ ...formData, sizes: newSizes });
-                      }}
-                      className={cn(
-                        'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                        formData.sizes.includes(size.value)
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      )}
-                    >
-                      {size.label}
-                    </button>
-                  ))}
+              <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                  <div className="p-1.5 bg-white/10 rounded-lg">
+                    <Check className="h-4 w-4" />
+                  </div>
+                  Tallas y Colores Disponibles
+                </h3>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Tallas</label>
+                  <div className="flex flex-wrap gap-2">
+                    {sizeOptions.map((size) => (
+                      <button
+                        key={size.value}
+                        type="button"
+                        onClick={() => {
+                          const newSizes = formData.sizes.includes(size.value)
+                            ? formData.sizes.filter((s) => s !== size.value)
+                            : [...formData.sizes, size.value];
+                          setFormData({ ...formData, sizes: newSizes });
+                        }}
+                        className={cn(
+                          'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                          formData.sizes.includes(size.value)
+                            ? 'bg-white text-black'
+                            : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
+                        )}
+                      >
+                        {size.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Colores</label>
+                  <div className="flex flex-wrap gap-2">
+                    {colorOptions.map((color) => (
+                      <button
+                        key={color.value}
+                        type="button"
+                        onClick={() => {
+                          const newColors = formData.colors.includes(color.value)
+                            ? formData.colors.filter((c) => c !== color.value)
+                            : [...formData.colors, color.value];
+                          setFormData({ ...formData, colors: newColors });
+                        }}
+                        className={cn(
+                          'px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2',
+                          formData.colors.includes(color.value)
+                            ? 'bg-white text-black'
+                            : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
+                        )}
+                      >
+                        <span
+                          className="w-4 h-4 rounded-full border border-white/20"
+                          style={{ backgroundColor: color.color }}
+                        />
+                        {color.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Colores</label>
-                <div className="flex flex-wrap gap-2">
-                  {colorOptions.map((color) => (
-                    <button
-                      key={color.value}
-                      type="button"
-                      onClick={() => {
-                        const newColors = formData.colors.includes(color.value)
-                          ? formData.colors.filter((c) => c !== color.value)
-                          : [...formData.colors, color.value];
-                        setFormData({ ...formData, colors: newColors });
-                      }}
-                      className={cn(
-                        'px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2',
-                        formData.colors.includes(color.value)
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      )}
-                    >
-                      <span
-                        className="w-4 h-4 rounded-full border"
-                        style={{ backgroundColor: color.color }}
+              {/* Additional Info */}
+              <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                  <div className="p-1.5 bg-white/10 rounded-lg">
+                    <Check className="h-4 w-4" />
+                  </div>
+                  Información Adicional
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Marca</label>
+                    <Input
+                      value={formData.brand}
+                      onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                      placeholder="Marca del producto"
+                      className="bg-white/5 border-white/10 text-white placeholder-gray-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Etiquetas (Tags)</label>
+                    <Input
+                      value={formData.tags}
+                      onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                      placeholder="aesthetic, urbano, casual"
+                      className="bg-white/5 border-white/10 text-white placeholder-gray-500"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">Separa las etiquetas con comas</p>
+              </div>
+
+              {/* Status Toggles */}
+              <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
+                <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                  <div className="p-1.5 bg-white/10 rounded-lg">
+                    <Check className="h-4 w-4" />
+                  </div>
+                  Estado del Producto
+                </h3>
+                <div className="flex flex-wrap gap-4">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className={cn(
+                      'relative w-12 h-6 rounded-full transition-colors',
+                      formData.isActive ? 'bg-emerald-500' : 'bg-white/20'
+                    )}>
+                      <input
+                        type="checkbox"
+                        checked={formData.isActive}
+                        onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                        className="sr-only"
                       />
-                      {color.label}
-                    </button>
-                  ))}
+                      <div className={cn(
+                        'absolute top-1 w-4 h-4 rounded-full bg-white transition-all',
+                        formData.isActive ? 'left-7' : 'left-1'
+                      )} />
+                    </div>
+                    <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                      Producto activo
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className={cn(
+                      'relative w-12 h-6 rounded-full transition-colors',
+                      formData.isFeatured ? 'bg-amber-500' : 'bg-white/20'
+                    )}>
+                      <input
+                        type="checkbox"
+                        checked={formData.isFeatured}
+                        onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
+                        className="sr-only"
+                      />
+                      <div className={cn(
+                        'absolute top-1 w-4 h-4 rounded-full bg-white transition-all',
+                        formData.isFeatured ? 'left-7' : 'left-1'
+                      )} />
+                    </div>
+                    <span className="text-sm text-gray-300 group-hover:text-white transition-colors">
+                      Producto destacado
+                    </span>
+                  </label>
                 </div>
-              </div>
-
-              {/* Featured & Active */}
-              <div className="flex items-center gap-6">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isFeatured}
-                    onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
-                    className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Producto destacado</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Activo</span>
-                </label>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 mt-6 pt-6 border-t">
+            {/* Footer Actions */}
+            <div className="flex items-center justify-between gap-4 mt-6 pt-4 border-t border-white/10">
               <Button
-                variant="outline"
+                variant="ghost"
                 onClick={() => {
                   setIsAddModalOpen(false);
                   setIsEditModalOpen(false);
                 }}
+                className="text-gray-400 hover:text-white"
               >
                 Cancelar
               </Button>
-              <Button onClick={() => handleSubmit(isEditModalOpen)} isLoading={isSubmitting}>
-                {isEditModalOpen ? 'Guardar Cambios' : 'Crear Producto'}
-              </Button>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    // Preview logic could go here
+                    toast.success('Vista previa disponible pronto');
+                  }}
+                  className="border-white/20 text-white hover:bg-white/10"
+                >
+                  Vista Previa
+                </Button>
+                <Button
+                  onClick={() => handleSubmit(isEditModalOpen)}
+                  isLoading={isSubmitting}
+                  className="min-w-[140px]"
+                >
+                  {isEditModalOpen ? 'Guardar Cambios' : 'Crear Producto'}
+                </Button>
+              </div>
             </div>
           </Modal>
         )}

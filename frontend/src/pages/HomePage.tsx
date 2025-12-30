@@ -12,6 +12,7 @@ import { AnimatedSection, StaggerContainer, StaggerItem } from '@/components/ani
 import { Button } from '@/components/ui/Button';
 import { ProductCard } from '@/components/ui/ProductCard';
 import { categoryService } from '@/lib/supabase';
+import { useFeaturedProducts } from '@/hooks/useProducts';
 import type { Category } from '@/types';
 
 // Mock data - replace with real data from Supabase
@@ -47,95 +48,6 @@ const defaultCategories: (Category & { products_count: number })[] = [
   { id: '4', name: 'Accesorios', slug: 'accessories', image_url: 'https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=600', products_count: 0, position: 4, is_active: true },
 ];
 
-const featuredProducts = [
-  {
-    id: '1',
-    name: 'Camiseta Algodón Premium',
-    slug: 'camiseta-algodon-premium',
-    description: 'Camiseta de algodón premium',
-    short_description: 'Algodón premium',
-    price: 89000,
-    compare_at_price: 120000,
-    sku: 'ECT-001',
-    quantity: 100,
-    track_quantity: true,
-    continue_selling_when_out_of_stock: false,
-    category_id: '1',
-    category: { id: '1', name: 'Camisetas', slug: 't-shirts', position: 1, is_active: true },
-    tags: ['esencial', 'algodón'],
-    images: [{ id: '1', product_id: '1', url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800', alt_text: 'Camiseta Algodón', position: 1, is_primary: true }],
-    variants: [],
-    is_active: true,
-    is_featured: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    name: 'Chaqueta Denim Urbana',
-    slug: 'chaqueta-denim-urbana',
-    description: 'Chaqueta de jean clásica',
-    short_description: 'Denim clásico',
-    price: 350000,
-    sku: 'UDJ-001',
-    quantity: 50,
-    track_quantity: true,
-    continue_selling_when_out_of_stock: false,
-    category_id: '2',
-    category: { id: '2', name: 'Chaquetas', slug: 'jackets', position: 2, is_active: true },
-    tags: ['denim', 'urbano'],
-    images: [{ id: '2', product_id: '2', url: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800', alt_text: 'Chaqueta Denim', position: 1, is_primary: true }],
-    variants: [],
-    is_active: true,
-    is_featured: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    name: 'Pantalón Chino Slim',
-    slug: 'pantalon-chino-slim',
-    description: 'Pantalón chino slim fit cómodo',
-    short_description: 'Diseño slim fit',
-    price: 180000,
-    sku: 'SFC-001',
-    quantity: 75,
-    track_quantity: true,
-    continue_selling_when_out_of_stock: false,
-    category_id: '3',
-    category: { id: '3', name: 'Pantalones', slug: 'pants', position: 3, is_active: true },
-    tags: ['chinos', 'slim'],
-    images: [{ id: '3', product_id: '3', url: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800', alt_text: 'Chinos', position: 1, is_primary: true }],
-    variants: [],
-    is_active: true,
-    is_featured: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: '4',
-    name: 'Cinturón de Cuero',
-    slug: 'cinturon-cuero',
-    description: 'Cinturón de cuero genuino',
-    short_description: 'Cuero genuino',
-    price: 95000,
-    compare_at_price: 130000,
-    sku: 'LB-001',
-    quantity: 120,
-    track_quantity: true,
-    continue_selling_when_out_of_stock: false,
-    category_id: '4',
-    category: { id: '4', name: 'Accesorios', slug: 'accessories', position: 4, is_active: true },
-    tags: ['cuero', 'accesorio'],
-    images: [{ id: '4', product_id: '4', url: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800', alt_text: 'Cinturón Cuero', position: 1, is_primary: true }],
-    variants: [],
-    is_active: true,
-    is_featured: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
-
 const benefits = [
   { icon: Truck, title: 'Envío Gratis', description: 'En compras mayores a $200.000' },
   { icon: Shield, title: 'Pago Seguro', description: 'Checkout 100% seguro' },
@@ -153,6 +65,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const [categories, setCategories] = useState<(Category & { products_count: number })[]>(defaultCategories);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const { data: featuredProducts, isLoading: loadingFeatured } = useFeaturedProducts();
 
   useEffect(() => {
     async function loadCategories() {
@@ -355,15 +268,38 @@ export function HomePage() {
           </AnimatedSection>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProducts.map((product, index) => (
-              <AnimatedSection
-                key={product.id}
-                animation="fadeUp"
-                delay={index * 0.1}
-              >
-                <ProductCard product={product} />
-              </AnimatedSection>
-            ))}
+            {loadingFeatured ? (
+              // Loading skeleton
+              Array.from({ length: 4 }).map((_, index) => (
+                <AnimatedSection key={index} animation="fadeUp" delay={index * 0.1}>
+                  <div className="bg-primary-900 rounded-2xl overflow-hidden animate-pulse">
+                    <div className="aspect-[3/4] bg-primary-800" />
+                    <div className="p-4 space-y-3">
+                      <div className="h-4 bg-primary-800 rounded w-3/4" />
+                      <div className="h-4 bg-primary-800 rounded w-1/2" />
+                    </div>
+                  </div>
+                </AnimatedSection>
+              ))
+            ) : featuredProducts && featuredProducts.length > 0 ? (
+              featuredProducts.slice(0, 8).map((product, index) => (
+                <AnimatedSection
+                  key={product.id}
+                  animation="fadeUp"
+                  delay={index * 0.1}
+                >
+                  <ProductCard product={product} />
+                </AnimatedSection>
+              ))
+            ) : (
+              // Fallback cuando no hay productos destacados
+              <div className="col-span-4 text-center py-12">
+                <p className="text-gray-400 mb-4">No hay productos destacados disponibles</p>
+                <Button onClick={() => navigate('/shop')} leftIcon={<ShoppingBag className="h-4 w-4" />}>
+                  Ver Todos los Productos
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </section>
