@@ -133,7 +133,7 @@ export interface Product {
   quantity: number;
   track_quantity: boolean;
   continue_selling_when_out_of_stock: boolean;
-  category_id: string;
+  category_id?: string;
   category?: Category;
   brand?: string;
   tags: string[];

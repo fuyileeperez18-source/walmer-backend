@@ -119,7 +119,7 @@ const productSchema = z.object({
   quantity: z.number().int().min(0).default(0),
   track_quantity: z.boolean().default(true),
   continue_selling_when_out_of_stock: z.boolean().default(false),
-  category_id: z.string().uuid().optional(),
+  category_id: z.string().uuid().optional().nullable().transform((val) => (val === '' ? null : val)),
   brand: z.string().optional().nullable(),
   tags: z.array(z.string()).default([]),
   is_active: z.boolean().default(true),

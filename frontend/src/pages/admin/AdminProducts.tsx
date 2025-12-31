@@ -299,7 +299,7 @@ export function AdminProducts() {
         price: parseFloat(formData.price),
         sku: formData.sku,
         quantity: parseInt(formData.quantity) || 0,
-        category_id: formData.category_id || null,
+        category_id: formData.category_id || undefined,
         brand: formData.brand,
         tags: formData.tags.split(',').map((t) => t.trim()).filter(Boolean),
         gender: formData.gender || undefined,
@@ -321,13 +321,46 @@ export function AdminProducts() {
         productData.weight = parseFloat(formData.weight);
       }
 
+      let createdProduct: any;
+
       if (isEdit && selectedProduct) {
         await productService.update(selectedProduct.id, productData);
         toast.success('Producto actualizado exitosamente');
         setIsEditModalOpen(false);
+        // Actualizar imágenes existentes
+        if (productImages.length > 0) {
+          for (const image of productImages) {
+            if (image.url && !image.id?.startsWith('temp-')) {
+              // La imagen ya está asociada, actualizar si es necesario
+            }
+          }
+        }
       } else {
-        await productService.create(productData);
+        // Crear producto primero
+        createdProduct = await productService.create(productData);
         toast.success('Producto creado exitosamente');
+
+        // Asociar imágenes al producto creado
+        if (productImages.length > 0 && createdProduct?.id) {
+          for (let i = 0; i < productImages.length; i++) {
+            const image = productImages[i];
+            if (image.url && !image.id?.startsWith('temp-')) {
+              // Las imágenes que vienen del ImageUpload ya tienen public_id y están en Cloudinary
+              // Solo necesitamos asociarlas al producto
+              try {
+                await productService.addImage(createdProduct.id, {
+                  url: image.url,
+                  alt_text: image.alt_text || '',
+                  position: image.position,
+                  is_primary: image.is_primary,
+                });
+              } catch (imgError) {
+                console.error('Error associating image:', imgError);
+              }
+            }
+          }
+        }
+
         setIsAddModalOpen(false);
       }
 
